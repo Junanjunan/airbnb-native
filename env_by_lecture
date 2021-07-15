@@ -1,0 +1,10 @@
+# 6.1 Setup
+
+    설치, 셋팅 완료 후 앱실행
+        (airbnb-native)
+            $ npm start
+
+        로그인 안되어있으면 해야한다. (LOGGED IN AS ~ 라고 떠야 함) 로그인해야 핸드폰에서 application 확인 가능
+            로그인 방법: $ expo login
+            미리 만들어둔 expo 아이디(email or username 나는 wnsghksk@gmail.com or taltalrealty)로 로그인
+            그러면 컴퓨터와 핸드폰이 연동된다.
