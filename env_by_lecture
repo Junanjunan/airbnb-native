@@ -8,3 +8,101 @@
             로그인 방법: $ expo login
             미리 만들어둔 expo 아이디(email or username 나는 wnsghksk@gmail.com or taltalrealty)로 로그인
             그러면 컴퓨터와 핸드폰이 연동된다.
+
+
+# 6.2 Preloading Images
+    
+    * 전체적인 설명은 docs.expo.io 에서 가져옴
+
+    AppLoading
+        - (nicco왈) 내가 항상 사용하는 첫번째 component이다.
+        - 화면 뒤에서 실제 앱에 필요한 사항들을 로딩할 수 있다. 그 후에 application을 실행
+
+    (App.js) 기본
+        import { StatusBar } from 'expo-status-bar';
+        import React from 'react';
+        import { StyleSheet, Text, View } from 'react-native';
+
+        export default function App() {
+        return (
+            <View style={styles.container}>
+            <Text>Welcome to Airbnb</Text>
+            <StatusBar style="auto" />
+            </View>
+        );
+        }
+
+        const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        });
+
+    (App.js) 변경
+        import { StatusBar } from 'expo-status-bar';
+        import React from 'react';
+        import { AppLoading } from "expo";
+
+        export default function App() {
+        return <AppLoading />;
+        }
+
+        -> 오류 발생: 댓글 확인
+            AppLoading 이 expo 에서 분리되서 expo-app-loading 에 있나보네요.
+            expo install expo-app-loading 해서 설치하시고
+            import AppLoading from 'expo-app-loading' 해야 하네요.
+                    
+
+    이미지 불러오기
+    (App.js)
+        import { StatusBar } from 'expo-status-bar';
+        import React, { useState } from 'react';
+        import { Asset } from 'expo-asset';
+        import AppLoading from 'expo-app-loading';
+        import { Text, Image } from 'react-native';
+
+        const cacheImages = images => images.map(image =>{
+        if(typeof image === "string"){
+            return Image.prefetch(image);
+        } else {                          # 이렇게 폴더에 있는 이미지를 가져오는 경우를 위해서 npm add expo-asset
+            return Asset.fromModule(image).downloadAsync();
+        }
+        });
+
+        export default function App() {
+        const [isReady, setIsReady] = useState(false);
+        const handleFinish = () => setIsReady(true);
+        const loadAssets = async () => {
+            const images = [
+            require("./assets/loginBg.jpg"),
+        "https://www.google.com/url?sa=i&url=https%3A%2F%2Febenezersuites.com%2Fhome%2Fairbnb-logo%2F&psig=AOvVaw1nvmxtozHJBe-U0j7iYZey&ust=1626415945104000&source=images&cd=vfe&ved=0CAoQjRxqFwoTCND24de15PECFQAAAAAdAAAAABAI"
+        ];
+        console.log(cacheImages(images));
+        }
+        return isReady ? (<Text>I'm ready</Text>) : (
+        <AppLoading 
+        onError={console.error} 
+        onFinish={handleFinish} 
+        startAsync={loadAssets} />
+        );
+        }
+
+    이렇게하고 실행하면, 아래와 같은 console.log 출력
+
+        Array [
+        Promise {
+            "_U": 0,
+            "_V": 0,
+            "_W": null,
+            "_X": null,
+        },
+        Promise {
+            "_U": 0,
+            "_V": 0,
+            "_W": null,
+            "_X": null,
+        },
+        ]
