@@ -1,3 +1,6 @@
+** 핸드폰에서 Expo가 저절로 꺼지는 오류 발생시
+    오타가 생겼을 때 오타 수정해주니 해결되었음 (alignItems: "Center" 를 "center" 로 바르게 고쳤더니 해결됨)
+
 # 6.1 Setup
 
     설치, 셋팅 완료 후 앱실행
@@ -156,3 +159,106 @@
         startAsync={loadAssets} />
         );
         }
+
+
+## 7 REDUX SETUP
+
+# 7.0 userSlice
+    (Gate.js)
+        import React from "react";
+
+        export default () => {
+            const isLoggedIn = False;
+            return (<View>{isLoggedIn? <TexT>Welcome</TexT> : <Text>Login Please</Text>}</View>);
+        }
+
+
+    (App.js)
+        import { StatusBar } from 'expo-status-bar';
+        import React, { useState } from 'react';
+        import { Asset } from 'expo-asset';
+        import * as Font from 'expo-font';
+        import AppLoading from 'expo-app-loading';
+        import { Ionicons } from '@expo/vector-icons';
+        import { Text, Image } from 'react-native';
+        import Gate from "./components/Gate";
+
+        const cacheImages = images => images.map(image =>{
+        if(typeof image === "string"){
+            return Image.prefetch(image);
+        } else {                          
+            return Asset.fromModule(image).downloadAsync();
+        }
+        });
+
+        const cacheFonts = fonts => fonts.map(font => Font.loadAsync(font))
+
+        export default function App() {
+        const [isReady, setIsReady] = useState(false);
+        const handleFinish = () => setIsReady(true);
+        const loadAssets = async () => {
+            const images = [
+            require("./assets/loginBg.jpg"),
+        "https://www.google.com/url?sa=i&url=https%3A%2F%2Febenezersuites.com%2Fhome%2Fairbnb-logo%2F&psig=AOvVaw1nvmxtozHJBe-U0j7iYZey&ust=1626415945104000&source=images&cd=vfe&ved=0CAoQjRxqFwoTCND24de15PECFQAAAAAdAAAAABAI"
+        ];
+        const fonts = [Ionicons.font]
+        const imagePromises = cacheImages(images);
+        const fontPromises = cacheFonts(fonts);
+        return Promise.all([...fontPromises, ...imagePromises])
+        }
+        return isReady ? (
+            <Gate />
+        ) : (
+            <AppLoading 
+            onError={console.error} 
+            onFinish={handleFinish} 
+            startAsync={loadAssets} 
+            />
+        );
+        }
+
+    여기까지 하고 보면, 정 중앙에 Login Please 뜰 것임
+
+
+    * 이제 Redux toolkit을 설치하자
+        $ npm install @reduxjs/toolkit
+    * Redux 설치
+        $ npm add redux
+    * ?
+        $ npm add react-redux
+
+    설치가 모두 끝나면 Redux 시작
+    redux 폴더를 만들고 그 안에 store.js, userSlice.js, rootReducer.js 만들자 (userSlice.js - 우리의 첫 reducer?)
+
+    (redux/userSlice.js)
+        import { createSlice } from "@reduxjs/toolkit"
+
+
+        const userSlice = createSlice({
+            name: "users",
+            initialState: {
+                isLoggedIn: false,
+                token: null
+            },
+            reducers: {
+                logIn(state, action){
+                    state.isLoggedIn = true;
+                    state.token = action.payload.token;
+                },
+                logOut(state, action){
+                    state.isLoggedIn = false;
+                    state.token = null;
+                }
+            }
+        })
+
+        export const {logIn, logOut} = userSlice.actions;
+        export default userSlice.reducer;
+
+    (redux/rootReducer.js)
+        import { combineReducers } from "redux";
+        import usersReducer from "./userSlice";
+
+        export default combineReducers({
+            usersReducer
+        })
