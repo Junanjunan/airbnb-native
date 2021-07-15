@@ -106,3 +106,53 @@
             "_X": null,
         },
         ]
+
+
+# 6.3 Preloading Fonts
+
+    expo의 vector-icons를 이용할 것임
+    설치: $ npm add @expo/vector-icons
+
+    font 패지지도 필요
+    설치: $ expo install expo-font
+
+    (App.js)
+        import { StatusBar } from 'expo-status-bar';
+        import React, { useState } from 'react';
+        import { Asset } from 'expo-asset';
+        import * as Font from 'expo-font';
+        import AppLoading from 'expo-app-loading';
+        import { Ionicons } from '@expo/vector-icons';
+        import { Text, Image } from 'react-native';
+
+        const cacheImages = images => images.map(image =>{
+        if(typeof image === "string"){
+            return Image.prefetch(image);
+        } else {                          
+            return Asset.fromModule(image).downloadAsync();
+        }
+        });
+
+        const cacheFonts = fonts => fonts.map(font => Font.loadAsync(font))
+
+        export default function App() {
+        const [isReady, setIsReady] = useState(false);
+        const handleFinish = () => setIsReady(true);
+        const loadAssets = async () => {
+            const images = [
+            require("./assets/loginBg.jpg"),
+        "https://www.google.com/url?sa=i&url=https%3A%2F%2Febenezersuites.com%2Fhome%2Fairbnb-logo%2F&psig=AOvVaw1nvmxtozHJBe-U0j7iYZey&ust=1626415945104000&source=images&cd=vfe&ved=0CAoQjRxqFwoTCND24de15PECFQAAAAAdAAAAABAI"
+        ];
+        const fonts = [Ionicons.font]
+        const imagePromises = cacheImages(images);                  # array 임
+        const fontPromises = cacheFonts(fonts);                     # array 임
+        console.log(cacheFonts(fonts));
+        return Promise.all([...fontPromises, ...imagePromises])     # ... : 3개의 점을 찍으면 배열(array) 안의 내용물을 가져온다는 것
+        }
+        return isReady ? (<Text>I'm ready</Text>) : (
+        <AppLoading 
+        onError={console.error} 
+        onFinish={handleFinish} 
+        startAsync={loadAssets} />
+        );
+        }
