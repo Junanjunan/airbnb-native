@@ -238,7 +238,7 @@
             name: "users",
             initialState: {
                 isLoggedIn: false,
-                token: null
+                token: null             # 처음 상태에서 token: null -> token을 만든 이유는 token을 state에 저장하기 위해서다
             },
             reducers: {
                 logIn(state, action){
@@ -768,3 +768,25 @@ export default userSlice.reducer;
         처음에 열기 전에 떠있던 창은 닫아주자
 
         -> React Native Debugger가 state를 보여준다.
+
+
+# 7.4 Recap!
+    preloading
+    (App.js)
+    const loadAssets = Async () 에서 Async가 필요없다고 지웠음
+    <AppLoading startAsync={loadAssets}에 loadAssets에 await를 붙임
+        -> <AppLoading startAsync={await loadAssets}
+            왜냐면 많은 promise 들을 return 하니까 모든 promise 들이 load 될 때까지 기다려야 한다.
+        라고 하고서는 또 지움...
+
+    (redux/store.js)
+        const persistConfg = {
+            key: "root",
+            storage: AsyncStorage
+        }
+    에서
+    key는 어떻게 state를 핸드폰에 저장하고 싶은지 알려주는 것임
+    storage는 저장하기 위해 어떤 걸 사용하고 싶은지에 관한 것이다. 우리는 (React-Native의) AsyncStorage를 이용
+        AsyncStorage는 다음과 같이 사용 가능
+        AsyncStorage.getItem("root")
+        그러면 저장한 모든 state를 찾을 수 있다.
