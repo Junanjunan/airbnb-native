@@ -163,7 +163,7 @@
 
 ## 7 REDUX SETUP
 
-# 7.0 userSlice
+# 7.0 usersSlice
     (Gate.js)
         import React from "react";
 
@@ -228,13 +228,13 @@
         $ npm add react-redux
 
     설치가 모두 끝나면 Redux 시작
-    redux 폴더를 만들고 그 안에 store.js, userSlice.js, rootReducer.js 만들자 (userSlice.js - 우리의 첫 reducer?)
+    redux 폴더를 만들고 그 안에 store.js, usersSlice.js, rootReducer.js 만들자 (usersSlice.js - 우리의 첫 reducer?)
 
-    (redux/userSlice.js)
+    (redux/usersSlice.js)
         import { createSlice } from "@reduxjs/toolkit"
 
 
-        const userSlice = createSlice({
+        const usersSlice = createSlice({
             name: "users",
             initialState: {
                 isLoggedIn: false,
@@ -252,13 +252,284 @@
             }
         })
 
-        export const {logIn, logOut} = userSlice.actions;
-        export default userSlice.reducer;
+        export const {logIn, logOut} = usersSlice.actions;
+        export default usersSlice.reducer;
 
     (redux/rootReducer.js)
         import { combineReducers } from "redux";
-        import usersReducer from "./userSlice";
+        import usersReducer from "./usersSlice";
 
         export default combineReducers({
             usersReducer
         })
+
+
+7.1 login and logOut
+
+    rootReducer.js에서 모든 reducer들을 결합할 것이다
+
+    (store.js)
+        import {configureStore} from "@reduxjs/toolkit";
+        import rootReducer from "./rootReducer";
+
+        const store = configureStore({
+            reducer: rootReducer
+        });
+
+        export default store;
+    
+    이제 store는 만들었으니 App.js에 연결해보자
+
+    (App.js)
+        import { StatusBar } from 'expo-status-bar';
+        import React, { useState } from 'react';
+        import { Asset } from 'expo-asset';
+        import * as Font from 'expo-font';
+        import AppLoading from 'expo-app-loading';
+        import { Ionicons } from '@expo/vector-icons';
+        import { Text, Image } from 'react-native';
+        import Gate from "./components/Gate";
+        import store from "./redux/store";
+
+        const cacheImages = images => images.map(image =>{
+        if(typeof image === "string"){
+            return Image.prefetch(image);
+        } else {                          
+            return Asset.fromModule(image).downloadAsync();
+        }
+        });
+
+        const cacheFonts = fonts => fonts.map(font => Font.loadAsync(font))
+
+        export default function App() {
+        const [isReady, setIsReady] = useState(false);
+        const handleFinish = () => setIsReady(true);
+        const loadAssets = async () => {
+            const images = [
+            require("./assets/loginBg.jpg"),
+        "https://www.google.com/url?sa=i&url=https%3A%2F%2Febenezersuites.com%2Fhome%2Fairbnb-logo%2F&psig=AOvVaw1nvmxtozHJBe-U0j7iYZey&ust=1626415945104000&source=images&cd=vfe&ved=0CAoQjRxqFwoTCND24de15PECFQAAAAAdAAAAABAI"
+        ];
+        const fonts = [Ionicons.font]
+        const imagePromises = cacheImages(images);
+        const fontPromises = cacheFonts(fonts);
+        return Promise.all([...fontPromises, ...imagePromises])
+        }
+        return isReady ? (
+            <Provider store={store}>                    # react-redux에서 Provider를 가져와야 하고, Provider는 store에 접근할 수 있어야 한다.
+            <Gate />
+            </Provider>
+        ) : (
+            <AppLoading 
+            onError={console.error} 
+            onFinish={handleFinish} 
+            startAsync={loadAssets} 
+            />
+        );
+        }
+
+    여기까지 하고 새로고침하면, 아무 에러 발생하지 않아야 한다.
+
+    Gate component에 isLoggedIn이 false로 정의되어 있다.
+    이제 2가지 옵션이 있다. 첫번째 옵션은 일반적인 Redux 방식으로 하는 것이다. - mapStateToProps를 사용
+
+    (Gate.js)
+        import React from "react";
+        import { View, Text } from "react-native";
+
+        export default () => {
+            const isLoggedIn = false;
+            return (
+            <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                {isLoggedIn? <Text>Welcome</Text> : <Text>Login Please</Text>}
+                </View>
+            );
+        };
+    
+    이렇게 되어있던 것을 아래와 같이 변경
+
+        import React from "react";
+        import { View, Text } from "react-native";
+        import { connect } from "react-redux";
+
+        const Gate = props => {
+            console.log(props);
+            const isLoggedIn = false;
+            return (
+            <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                {isLoggedIn? <Text>Welcome</Text> : <Text>Login Please</Text>}
+            </View>
+            );
+        };
+
+        const mapStateToProps = (state) => {
+            console.log(state);
+            return {isLoggedIn: false}
+        }
+
+        export default connect(mapStateToProps)(Gate)
+
+    이렇게 해주고 Expo를 보면, 다음과 같이 출력
+
+        Object {
+        "usersReducer": Object {
+            "isLoggedIn": false,
+            "token": null,
+        },
+        }
+
+        -> mapStateToProps 의 console.log(state)가 출력된 것임
+        -> usersSlice.js 에 있는 것과 같음을 확인 가능
+
+    * hooks를 사용해서 코드를 줄일 수 있다. : useSelector 라는 hook을 사용해보자
+    
+    (Gate.js)
+        import React from "react";
+        import { View, Text } from "react-native";
+        import { connect, useSelector } from "react-redux";
+
+        export default () => {
+            const usersSlice = useSelector(state => state.usersReducer);
+            console.log(usersSlice);
+            return (
+            <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                {false? <Text>Welcome</Text> : <Text>Login Please</Text>}
+            </View>
+            );
+        };
+
+    selector는 state에 접근하게 해주고, state를 보내기도 한다.
+    userSelector는 state의 전부가 아닌 일부만 가져올 수 있기 때문에 유용하다.
+
+    위와 같이 하면 아래와 같이 출력 됨
+        Object {
+        "isLoggedIn": false,
+        "token": null,
+        }
+
+    usersSlice안에 isLoggedIn을 이용해서 다음과 같이 해도 됨
+
+    (Gate.js)
+        import React from "react";
+        import { View, Text } from "react-native";
+        import { connect, useSelector } from "react-redux";
+
+        export default () => {
+            const { isLoggedIn } = useSelector(state => state.usersReducer);
+            return (
+            <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                {isLoggedIn? <Text>Welcome</Text> : <Text>Login Please</Text>}
+            </View>
+            );
+        };
+
+    이를 이용해서, usersSlice.js 의 isLoggedIn 값을 변경해서 화면을 변경해줄 수 있다. 다음과 같이
+
+    (usersSlice.js)
+        import { createSlice } from "@reduxjs/toolkit"
+
+
+        const usersSlice = createSlice({
+            name: "users",
+            initialState: {
+                isLoggedIn: true,
+                token: null
+            },
+            reducers: {
+                logIn(state, action){
+                    state.isLoggedIn = true;
+                    state.token = action.payload.token;
+                },
+                logOut(state, action){
+                    state.isLoggedIn = false;
+                    state.token = null;
+                }
+            }
+        })
+
+        export const {logIn, logOut} = usersSlice.actions;
+        export default usersSlice.reducer;
+
+    TouchableOpacity, onPress를 이용할 건데
+    dispatch에 접근할 수 있어야 한다. dispatch를 가져올건데,
+    connect를 사용해서 mapDispatchToProps 로 가져올 수 있다.
+    또는 hook을 사용할 수 도 있다. (useDispatch)
+
+    (Gate.js)
+        import React from "react";
+        import { View, Text, TouchableOpacity } from "react-native";
+        import { useDispatch, useSelector } from "react-redux";
+        import { logIn, logOut } from "../redux/usersSlice";
+
+
+        export default () => {
+            const { isLoggedIn } = useSelector(state => state.usersReducer);
+            const dispatch = useDispatch();
+            return (
+            <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                {isLoggedIn? (
+                    <TouchableOpacity onPress={() => dispatch(logOut())}>
+                        <Text>Log Out</Text>
+                    </TouchableOpacity>) : (
+                    <TouchableOpacity onPress={() => dispatch(logIn())}>
+                        <Text>Log In</Text>
+                    </TouchableOpacity>
+                    )}
+            </View>
+            );
+        };
+
+    위와 같이 해주고 화면을 클릭해주면, 오류가 발생
+    (usersSlice.js)를 보면
+        import { createSlice } from "@reduxjs/toolkit"
+
+
+        const userSlice = createSlice({
+            name: "users",
+            initialState: {
+                isLoggedIn: false,
+                token: null
+            },
+            reducers: {
+                logIn(state, action){
+                    state.isLoggedIn = false;
+                    state.token = action.payload.token;     # 로그인할 때 토큰을 줘야 한다. -> Gate.js에서 token을 하나 만들어보자
+                },
+                logOut(state, action){
+                    state.isLoggedIn = false;
+                    state.token = null;
+                }
+            }
+        })
+
+        export const {logIn, logOut} = userSlice.actions;
+        export default userSlice.reducer;
+
+
+    (Gate.js)
+        import React from "react";
+        import { View, Text, TouchableOpacity } from "react-native";
+        import { useDispatch, useSelector } from "react-redux";
+        import { logIn, logOut } from "../redux/usersSlice";
+
+
+        export default () => {
+            const { isLoggedIn } = useSelector(state => state.usersReducer);
+            const dispatch = useDispatch();
+            return (
+                <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                    {isLoggedIn? (
+                        <TouchableOpacity onPress={() => dispatch(logOut())}>
+                            <Text>Log Out</Text>
+                        </TouchableOpacity>
+                        ) : (
+                        <TouchableOpacity onPress={() => dispatch(logIn("bs.token"))}>
+                            <Text>Log In</Text>
+                        </TouchableOpacity>
+                        )}
+                </View>
+            );
+        };
+
+        이렇게 해줬더니 오류는 안뜨는데, 화면 전환이 안된다.. 강의에서는 되는데... 
+
+    * 다음 강의에서는 모바일에서 login 이 계속 유지되는 것을 해보도록 하자.
