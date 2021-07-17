@@ -530,6 +530,34 @@
             );
         };
 
-        이렇게 해줬더니 오류는 안뜨는데, 화면 전환이 안된다.. 강의에서는 되는데... 
+    이렇게 해줬더니 오류는 안뜨는데, 화면 전환이 안된다.. 강의에서는 되는데... 
+    (usersSlice.js)를 다음과 같이 해주었더니 전환됨
+        import { createSlice } from "@reduxjs/toolkit"
+
+
+        const userSlice = createSlice({
+            name: "users",
+            initialState: {
+                isLoggedIn: false,
+                token: null
+            },
+            reducers: {
+                logIn(state, action){
+                    state.isLoggedIn = true;
+                    state.token = action.payload.token;
+                },
+                logOut(state, action){
+                    state.isLoggedIn = false;
+                    state.token = null;
+                }
+            }
+        })
+
+export const {logIn, logOut} = userSlice.actions;
+export default userSlice.reducer;
+
 
     * 다음 강의에서는 모바일에서 login 이 계속 유지되는 것을 해보도록 하자.
+
+
+# 7.2 redux-persist part One
