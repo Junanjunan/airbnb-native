@@ -268,7 +268,7 @@
 
     rootReducer.js에서 모든 reducer들을 결합할 것이다
 
-    (store.js)
+    (redux/store.js)
         import {configureStore} from "@reduxjs/toolkit";
         import rootReducer from "./rootReducer";
 
@@ -424,7 +424,7 @@
 
     이를 이용해서, usersSlice.js 의 isLoggedIn 값을 변경해서 화면을 변경해줄 수 있다. 다음과 같이
 
-    (usersSlice.js)
+    (redux/usersSlice.js)
         import { createSlice } from "@reduxjs/toolkit"
 
 
@@ -479,7 +479,7 @@
         };
 
     위와 같이 해주고 화면을 클릭해주면, 오류가 발생
-    (usersSlice.js)를 보면
+    (redux/usersSlice.js)를 보면
         import { createSlice } from "@reduxjs/toolkit"
 
 
@@ -531,7 +531,7 @@
         };
 
     이렇게 해줬더니 오류는 안뜨는데, 화면 전환이 안된다.. 강의에서는 되는데... 
-    (usersSlice.js)를 다음과 같이 해주었더니 전환됨
+    (redux/usersSlice.js)를 다음과 같이 해주었더니 전환됨
         import { createSlice } from "@reduxjs/toolkit"
 
 
@@ -557,7 +557,117 @@ export const {logIn, logOut} = userSlice.actions;
 export default userSlice.reducer;
 
 
-    * 다음 강의에서는 모바일에서 login 이 계속 유지되는 것을 해보도록 하자.
-
-
 # 7.2 redux-persist part One
+    * 모바일에서 login 이 계속 유지되는 것을 해보도록 하자.
+    Redux Persist는 redux에서 뭔가를 바꿀때마다 state를 저장해준다. redux에서 뭔가 바뀐것들이 핸드폰에 저장된다.
+
+    $ npm install redux-persist
+
+    configureStore 설정을 바꿔야 함
+
+    (redux/store.js)
+        import { configureStore } from "@reduxjs/toolkit";
+        import { persistStore, persistReducer } from "redux-persist";
+        import rootReducer from "./rootReducer";
+
+        const persistConfig = {
+            key:'root',                        # 여기에 state를 어디에 저장하고 싶은지 Redux Persist 설정을 추가하면 된다. 우선 공식문서와 똑같이 작성
+            storage: AsyncStorage
+        }
+
+        const persistedReducer = persistReducer(persistConfig, rootReducer)     # rootReducer 자리: persist 하려는 reducer, persist는 save를 의미 -> Redux Persist에게 rootReducer에 변화가 있을 때마다 매번 저장하라고 하는 것임
+
+        const store = configureStore({
+            reducer: rootReducer
+        });
+
+        export default store;
+
+    이제 configureStore의 reducer를 바꿔보자
+    rootReducer가 이제 필요 없고 persistedReducer가 와야 한다.
+    persistedReducer로 Redux store를 설정(configure)하는 것이다.
+
+    (redux/store.js)
+        import { configureStore } from "@reduxjs/toolkit";
+        import { persistStore, persistReducer } from "redux-persist";
+        import rootReducer from "./rootReducer";
+        import { AsyncStorage } from "react-native";                    
+
+        const persistConfig = {
+            key: "root",                      
+            storage: AsyncStorage
+        }
+
+        const persistedReducer = persistReducer(persistConfig, rootReducer)     
+
+        const store = configureStore({
+            reducer: persistedReducer
+        });
+
+        export default store;
+
+        여기까지 했을때 오류는 없어야 한다.
+        # AsyncStore가 없는 걸로 나오면 (줄이 그어져서 나오면)
+            npm install @react-native-async-storage/async-storage
+            해주고 다시 import 해보면 될것임 (https://react-native-async-storage.github.io/async-storage/docs/install/)
+            나는 설치해줘도 없는걸로 뜬다... Expo에서 되긴 되는데...
+
+        store와 관련된 문제가 하나 있는데, store도 persist 되어야 한다.
+
+        persistReducer는 reducer를 저장하고, persistStore는 store를 저장한다
+        그러니 persistedStore를 만들어보자
+
+    (redux/store.js)
+        import { configureStore } from "@reduxjs/toolkit";
+        import { persistStore, persistReducer } from "redux-persist";
+        import rootReducer from "./rootReducer";
+        import { AsyncStorage } from "react-native";
+
+        const persistConfig = {
+            key: "root",                        
+            storage: AsyncStorage
+        }
+
+        const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+        const store = configureStore({
+            reducer: persistedReducer
+        });
+
+        const persistedStore = persistStore(store);
+
+        export default store;
+
+    여기까지 하고 저장해보면, A non-seriaizable value was ~ 하고 오류가 뜨는데,
+    Redux tooklik이 Redux Persist가 가진 action들과 문제가 생긴 것이라 함
+
+    (redux/store.js)
+        import { configureStore, getDefaultMiddleware } from "@reduxjs/toolkit";
+        import { persistStore, persistReducer } from "redux-persist";
+        import rootReducer from "./rootReducer";
+        import { AsyncStorage } from "react-native";
+        import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE } from "redux-persist/es/constants";
+
+        const persistConfig = {
+            key: "root",                        
+            storage: AsyncStorage
+        };
+
+        const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+        const store = configureStore({
+            reducer: persistedReducer,
+            middleware: getDefaultMiddleware({
+                serializableCheck:{
+                    ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
+                }
+            })
+        });
+
+        const persistedStore = persistStore(store);
+
+        export default store;
+
+    Redux toolkit이 action을 만드는 방법을 가지고 있는데, Redux Persist는 다른 종류의 action을 가지고 있다.
+    따라서 이 둘이 잘 작동되도록 Redux toolkit에게 Redux Persist의 모든 action 들을 irgnore 하라고 한것임
+    (Redux toolkit은 Redux Persist의 action들이 이상하다고 생각하기 떄문)
