@@ -671,3 +671,100 @@ export default userSlice.reducer;
     Redux toolkit이 action을 만드는 방법을 가지고 있는데, Redux Persist는 다른 종류의 action을 가지고 있다.
     따라서 이 둘이 잘 작동되도록 Redux toolkit에게 Redux Persist의 모든 action 들을 irgnore 하라고 한것임
     (Redux toolkit은 Redux Persist의 action들이 이상하다고 생각하기 떄문)
+
+
+# 7.3 redux-persist part Two
+    PersistGate: 화면 rendering을 위해 state를 load 할 때까지 기다려주는 component임
+                핸드폰에 저장되어 있는 state를 load할 것이다.
+
+    (redux/store.js) 에 있던 persistedStore 의 이름을 persistor로 바꿔주고 App.js에서 이용
+        import { configureStore, getDefaultMiddleware } from "@reduxjs/toolkit";
+        import { persistStore, persistReducer } from "redux-persist";
+        import rootReducer from "./rootReducer";
+        import { AsyncStorage } from "react-native";
+        import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE } from "redux-persist/es/constants";
+
+        const persistConfig = {
+            key: "root",                        
+            storage: AsyncStorage
+        };
+
+        const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+        const store = configureStore({
+            reducer: persistedReducer,
+            middleware: getDefaultMiddleware({
+                serializableCheck:{
+                    ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
+                }
+            })
+        });
+
+        export const persistor = persistStore(store);
+
+        export default store;
+
+    (App.js)
+        import React, { useState } from 'react';
+        import { Asset } from 'expo-asset';
+        import * as Font from 'expo-font';
+        import AppLoading from 'expo-app-loading';
+        import { Ionicons } from '@expo/vector-icons';
+        import { Image } from 'react-native';
+        import { Provider } from "react-redux";
+        import { PersistGate } from 'redux-persist/integration/react';
+        import Gate from "./components/Gate";
+        import store, { persistor } from "./redux/store";
+
+        const cacheImages = images => images.map(image =>{
+        if(typeof image === "string"){
+            return Image.prefetch(image);
+        } else {                          
+            return Asset.fromModule(image).downloadAsync();
+        }
+        });
+
+        const cacheFonts = fonts => fonts.map(font => Font.loadAsync(font))
+
+        export default function App() {
+        const [isReady, setIsReady] = useState(false);
+        const handleFinish = () => setIsReady(true);
+        const loadAssets = async () => {
+            const images = [
+            require("./assets/loginBg.jpg"),
+        "https://www.google.com/url?sa=i&url=https%3A%2F%2Febenezersuites.com%2Fhome%2Fairbnb-logo%2F&psig=AOvVaw1nvmxtozHJBe-U0j7iYZey&ust=1626415945104000&source=images&cd=vfe&ved=0CAoQjRxqFwoTCND24de15PECFQAAAAAdAAAAABAI"
+        ];
+        const fonts = [Ionicons.font]
+        const imagePromises = cacheImages(images);
+        const fontPromises = cacheFonts(fonts);
+        return Promise.all([...fontPromises, ...imagePromises])
+        }
+        return isReady ? (
+            <Provider store={store}>                    # isLoggedIn === false
+            <PersistGate persistor={persistor}>       # isLoggedIn === true (핸드폰에서 state를 load 한 후)
+                <Gate />
+            </PersistGate>
+            </Provider>
+        ) : (
+            <AppLoading 
+            onError={console.error} 
+            onFinish={handleFinish} 
+            startAsync={loadAssets} 
+            />
+        );
+        }
+
+    여기까지 해도 오류 없어야 함
+    이렇게 하고, Log In이 띄어져있을 떄 save로 refreshing, Log Out 띄어져있을때 save로 refreshing 해서 화면 유지가 되면, persist가 되는 것임
+
+    * React Native 에서 (프로처럼) Redux를 debug 하는 것을 보자
+        expo documentation 사이트에서 (docs.expo.io) redux를 검색하면 https://docs.expo.io/workflow/debugging/#debugging-redux
+        , React Native Debugger 를 다운받을 수 있는 링크가 나옴 (https://github.com/jhen0409/react-native-debugger/releases)
+        beta는 오류가 많으니 beta 버전이 아닌것으로 설치해서 실행하자
+
+        docs에서 보면, ctrl+t 로 실행을 해보면, Port가 입력되어져서 나옴 19001 -> confirm
+        ** 강의에서는 19001이라고 했는데, 공식문서를 보면 19000 포트로 confirm 하라고 함.
+            강의 말고 공식문서대로 19000 포트로 confirm 했더니 작동 됨
+        처음에 열기 전에 떠있던 창은 닫아주자
+
+        -> React Native Debugger가 state를 보여준다.
