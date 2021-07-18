@@ -1208,3 +1208,36 @@ export default userSlice.reducer;
         };
 
         export default Btn;
+
+
+# 8.4 Sign In part One
+    (navigations/Auth.js)
+        import React from "react";
+        import { createStackNavigator } from "@react-navigation/stack";
+        import Welcome from "../screens/Welcome";
+        import SignIn from "../screens/SignIn";
+        import SignUp from "../screens/SignUp";
+        import BackBtn from "../components/Auth/BackBtn";
+
+        const Auth = createStackNavigator();
+
+        const isAndroid = true;
+
+        export default () => (
+            <Auth.Navigator mode="modal" headerMode="float" screenOptions={{
+                headerTitleStyle:{
+                    color: "white"
+                },
+                headerBackTitleVisible: false,
+                headerTransparent: true,
+                headerBackImage: () => <BackBtn />
+            }}>
+                <Auth.Screen name="Welcome" component={Welcome} options={{
+                    headerTitleStyle: {
+                        color: "white"
+                    }
+                }}/>
+                <Auth.Screen name="SignIn" component={SignIn} options={{title: "Sign In"}} />
+                <Auth.Screen name="SignUp" component={SignUp} options={{title: "Sign Up"}} />
+            </Auth.Navigator>
+        );  

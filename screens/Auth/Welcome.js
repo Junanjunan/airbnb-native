@@ -2,7 +2,7 @@ import React from "react";
 import { StatusBar } from "react-native";
 import styled from "styled-components/native";
 import { BlurView } from 'expo-blur';
-import Btn from "../components/Auth/Btn";
+import Btn from "../../components/Auth/Btn";
 
 const LOGO_URL = "https://blog.kakaocdn.net/dn/95jT7/btqQCAwEbDf/m30lmOx9xg7fKaPzQsFfJ1/img.jpg"
 
@@ -16,12 +16,15 @@ const Image = styled.Image`
     top: 0;
 `;
 
-const Logo = styled.Image` 
+const Logo = styled.Image`
+    margin-top: 50px;
     width: 100px;           
     height: 100px;
 `;
 
-const BtnContainer = styled.View``;
+const BtnContainer = styled.View`
+    margin-top: 20px;
+`;
 
 export default ({ navigation }) => {
     const goToSignUp = () => navigation.navigate("SignUp");
@@ -43,7 +46,7 @@ export default ({ navigation }) => {
                     <Btn onPress={goToSignIn} text={"Sign In"} />
                 </BtnContainer>
             </BlurView>
-            <Image source={require("../assets/loginBg.jpg")} />
+            <Image source={require("../../assets/loginBg.jpg")} />
             <StatusBar barStyle="light-content" />
         </Container>
     );
