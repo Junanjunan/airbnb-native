@@ -1268,3 +1268,101 @@ export default userSlice.reducer;
                 </Container>
             );
         };
+
+
+# 8.5 Sign In part Two
+    이제 사용자 이름과 비밀번호를 state에 등록해보자
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {View, Text} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+        `;
+
+        const TextInput = styled.TextInput``;
+
+        export default () => {
+            const [username, setUsername] = useState("");
+            const [password, setPassword] = useState("");
+            const handleSubmit = () => alert(`${username}${password}`);
+            return(
+                <Container>
+                    <TextInput autoCapitalize="none" onChangeText={(text) => setUsername(text)} value={username} placeholder="Email" keyboardType="email-address"></TextInput>
+                    <TextInput onChangeText={(text) => setPassword(text)} value={password} placeholder="Password" secureTextEntry></TextInput>
+                    <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                </Container>
+            );
+        };
+
+    기본로직 작성, 되는것 확인, 이제 좀 더 꾸며보자
+
+    (components/Auth/Input.js)
+        import React from "react";
+        import { Dimensions, TouchableOpacity } from "react-native";
+        import styled from "styled-components/native";
+
+
+
+        const { width } = Dimensions.get("screen")      
+
+        const Container = styled.TextInput`
+            width: ${width/1.5}px;
+        `;
+
+        const Input = ({value, placeholder, isPassword=false, autoCapitalize}) => (
+            <Container 
+                value={value} 
+                placeholder={placeholder} 
+                secureTextEntry={isPassword ? true: false} 
+                autoCapitalize={autoCapitalize}
+                onChangeText = {(text) => stateFn(text)} 
+            />
+        );
+
+        export default Input;
+
+    위 Input을 SignIn에 사용해보자
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {View, Text} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+        `;
+
+        const TextInput = styled.TextInput``;
+
+        export default () => {
+            const [username, setUsername] = useState("");
+            const [password, setPassword] = useState("");
+            const handleSubmit = () => alert(`${username}${password}`);
+            return(
+                <Container>
+                    <Input 
+                        value={username} 
+                        placeholder="Username" 
+                        autoCapitalize="none" 
+                        stateFn={setUsername}
+                    />
+                    <Input 
+                        value={password} 
+                        placeholder="Password" 
+                        stateFn={setPassword}    
+                    />
+                    <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                </Container>
+            );
+        };
+
+    여기까지 하고 SignIn 입력해보면 되는것 확인 가능
+
+    마무리로 propTypes 처리해주자
