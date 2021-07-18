@@ -1241,3 +1241,30 @@ export default userSlice.reducer;
                 <Auth.Screen name="SignUp" component={SignUp} options={{title: "Sign Up"}} />
             </Auth.Navigator>
         );  
+
+    screens 폴더에 있는 Welcome.js, SignIn.js, SignUp.js 모두 Auth라는 폴더를 하나 더 만들어서 넣어주고 다른 파일에서도 경로 변경 해주었음
+        (screens/Auth/Welcome.js, SignIn.js, SignUp.js)
+    
+    (screens/Auth/SignIn.js)
+        import React from "react";
+        import {View, Text} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+        `;
+
+        const TextInput = styled.TextInput``;
+
+        export default () => {
+            const handleSubmit = () => alert("Sending data...");
+            return(
+                <Container>
+                    <TextInput placeholder="Email" keyboardType="email-address"></TextInput>
+                    <TextInput placeholder="Password" secureTextEntry></TextInput>
+                    <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                </Container>
+            );
+        };
