@@ -1366,3 +1366,172 @@ export default userSlice.reducer;
     여기까지 하고 SignIn 입력해보면 되는것 확인 가능
 
     마무리로 propTypes 처리해주자
+
+
+# 8.6 Bugfixing
+
+    (components/Auth/input.js)
+        import React from "react";
+        import { Dimensions, TouchableOpacity } from "react-native";
+        import styled from "styled-components/native";
+        import PropTypes from "prop-types"
+        import colors from "../../colors";
+
+
+
+        const { width } = Dimensions.get("screen")      
+
+        const Container = styled.TextInput`
+            width: ${width/2}px;
+            padding: 12.5px 10px;
+            border: 1px solid ${colors.black};
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        `;
+
+        const Input = ({value, placeholder, isPassword=false, autoCapitalize, stateFn}) => (
+            <Container 
+                value={value} 
+                placeholder={placeholder} 
+                secureTextEntry={isPassword ? true: false} 
+                autoCapitalize={autoCapitalize}
+                onChangeText = {(text) => stateFn(text)}
+            />
+        );
+
+        Input.propTypes = {
+            value: PropTypes.string,
+            placeholder: PropTypes.string,
+            isPassword: PropTypes.bool,
+            autoCapitalize: PropTypes.string,
+            stateFn: PropTypes.func.isRequired
+        }
+
+        export default Input;
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {View, Text, StatusBar} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default () => {
+            const [username, setUsername] = useState("");
+            const [password, setPassword] = useState("");
+            const handleSubmit = () => alert(`${username}${password}`);
+            return(
+                <Container>
+                    <StatusBar barStyle="light-content" />
+                    <InputContainer>
+                        <Input 
+                            value={username} 
+                            placeholder="Username" 
+                            autoCapitalize="none" 
+                            stateFn={setUsername}
+                        />
+                        <Input 
+                            value={password} 
+                            placeholder="Password" 
+                            stateFn={setPassword}    
+                        />
+                    </InputContainer>
+                    <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                </Container>
+            );
+        };
+
+    SignUp.js 에도 붙여넣기 할수 있는데, 붙여넣기를 하지 말고 component를 만들어서 이용하자
+
+    KeyboardAvoidingView: Keyboard로부터 방해받지 않도록 할 부분을 감싸주면 된다.
+
+    Keyboard.dismiss() : input 밖을 탭하면 키보드가 사라지도록 하는 함수
+    TouchableWithoutFeedback 에 Keyboard.dimiss()를 적용해서, 원하는 범위 만큼 감싸서 적용하자
+
+    (screens/Auth/SignUp.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default () => {
+            const [firstname, setFirstname] = useState("");
+            const [lastname, setLastname] = useState("");
+            const [username, setUsername] = useState("");
+            const [password, setPassword] = useState("");
+            const handleSubmit = () => alert(`${username}${password}`);
+            const dismissKeyboard = () => Keyboard.dismiss();
+            return(
+                <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                    <Container>
+                        <StatusBar barStyle="light-content" />
+                            <KeyboardAvoidingView>
+                            <InputContainer>
+                                <Input 
+                                    value={firstname} 
+                                    placeholder="First name" 
+                                    autoCapitalize="none" 
+                                    stateFn={setFirstname}
+                                />
+                                <Input 
+                                    value={lastname} 
+                                    placeholder="Last name" 
+                                    autoCapitalize="none" 
+                                    stateFn={setLastname}
+                                />
+                                <Input 
+                                    value={username} 
+                                    placeholder="Username" 
+                                    autoCapitalize="none" 
+                                    stateFn={setUsername}
+                                />
+                                <Input 
+                                    value={password} 
+                                    placeholder="Password" 
+                                    stateFn={setPassword}    
+                                />
+                            </InputContainer>
+                            <Btn text={"Sign Up"} accent onPress={handleSubmit} />
+                            </KeyboardAvoidingView>
+                    </Container>
+                </TouchableWithoutFeedback>
+            );
+        };
+
+    위 부분을 component로 만들고 대입해보자
+
+    (components/DismissKeyboard.js)
+        import React from "react";
+        import { Keyboard, TouchableWithoutFeedback } from "react-native";
+
+        export default ({children}) => {                    # children: 리액트에서 children이라는 prop은 컴포넌트 안에 있는 어떤 내용이든 자동적으로 가져와준다.
+            const onPress = () => Keyboard.dismiss();
+            return (
+            <TouchableWithoutFeedback onPress={onPress}>
+                {children}
+            </TouchableWithoutFeedback>
+            );
+        }
+
