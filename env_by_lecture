@@ -790,3 +790,105 @@ export default userSlice.reducer;
         AsyncStorage는 다음과 같이 사용 가능
         AsyncStorage.getItem("root")
         그러면 저장한 모든 state를 찾을 수 있다.
+
+
+# 8.0 Auth Navigation part One
+    
+    React navigation을 이용하자
+    https://reactnavigation.org/docs/getting-started
+        $ npm install @react-navigation/stack
+        ($ npm install @react-navigation/native)
+        $ expo install react-native-gesture-handler react-native-reanimated react-native-screens react-native-safe-area-context @react-native-community/masked-view
+            https://dog-developers.tistory.com/183 보안 오류 해결 후
+                1. windows PowerShell 프로그램을 관리자 권한으로 실행합니다.
+                2. Get-ExecutionPolicy 명령어를 작성하면 본인의 권한? 상태가 보여집니다.
+                3. 권한이 RemoteSigned 가 아니라면 Set-ExecutionPolicy RemoteSigned 를 입력
+                4. Get-ExecutionPolicy 명령어로 다시 한번 확인 하면 RemoteSigned로 변경 확인.
+            Error: spawn yarnpkg ENOENT 뜨면
+                1. npm install --global yarn
+                2. expo update 후 다시 실행해주면 되었음
+
+    (navigation/Auth.js)
+        import { createStackNavigator } from "@react-navigation/stack";
+
+        const Auth = createStackNavigator();
+
+        export default () => <Auth.Navigator>
+                                                # navigator 안에는 screen이 와야 한다. 아직 없으니 screen을 만들자
+        </Auth.Navigator>   
+
+    (screens/Welcome.js), (screens/SignUp.js), (screen/SignIn.js) 생성
+        import React from "react";
+        import {View, Text} from "react-native";
+
+        export default () => (
+            <View style={{justifyContent: "center", alignItems: "center", flex: 1}}>
+                <Text>Welcome</Text>        # 각각 Sign Up, Sign In으로 3개의 screen 생성 
+            </View>
+        );
+
+    (navigation/Auth.js)
+        import React from "react";
+        import { createStackNavigator } from "@react-navigation/stack";
+        import Welcome from "../screens/Welcome";
+        import SignIn from "../screens/SignIn";
+        import SignUp from "../screens/SignUp";
+
+        const Auth = createStackNavigator();
+
+        export default () => <Auth.Navigator>
+            <Auth.Screen name="Welcome" component={Welcome} />
+            <Auth.Screen name="SignIn" component={SignIn} />
+            <Auth.Screen name="SignUp" component={SignUp} />
+        </Auth.Navigator>   
+
+    이제 Gate.js에서 render 해주자
+    (components/Gate.js)
+        import React from "react";
+        import { View, Text, TouchableOpacity } from "react-native";
+        import { useDispatch, useSelector } from "react-redux";
+        import { logIn, logOut } from "../redux/usersSlice";
+
+
+        export default () => {
+            const { isLoggedIn } = useSelector(state => state.usersReducer);
+            const dispatch = useDispatch();
+            return (
+                <NavigationContainer>   # Navigator를 render 하고 싶으면 NavigationContainer로 감싸주어야 한다.(아니면 오류)
+                <View style={{justifyContent: "center", alignItems: "center", flex: 1}}> # 이 부분은 이제 필요 없음 삭제
+                    {isLoggedIn? (
+                        <TouchableOpacity onPress={() => dispatch(logOut())}>
+                            <Text>Log Out</Text>
+                        </TouchableOpacity>
+                        ) : (
+                        <Auth /># user가 로그아웃 하면 보여주는 이부분에 Auth를 render할 것이다.
+                        )}
+                </View> # 삭제
+                </NavigationContainer>
+            );
+        };
+
+    (components/Gate.js)
+        import React from "react";
+        import { View, Text, TouchableOpacity } from "react-native";
+        import { useDispatch, useSelector } from "react-redux";
+        import { logIn, logOut } from "../redux/usersSlice";
+        import Auth from "../navigation/Auth";
+        import { NavigationContainer } from "@react-navigation/native";
+
+
+        export default () => {
+            const { isLoggedIn } = useSelector(state => state.usersReducer);
+            const dispatch = useDispatch();
+            return (
+                <NavigationContainer>   
+                    {isLoggedIn? (
+                        <TouchableOpacity onPress={() => dispatch(logOut())}>
+                            <Text>Log Out</Text>
+                        </TouchableOpacity>
+                        ) : (
+                        <Auth />
+                        )}
+                </NavigationContainer>
+            );
+        };
