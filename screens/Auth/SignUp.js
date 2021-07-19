@@ -17,12 +17,13 @@ const InputContainer = styled.View`
     margin-bottom: 30px;
 `;
 
-export default () => {
+export default ({navigation: { navigate } }) => {
     const [firstName, setFirstname] = useState("");
     const [lastName, setLastname] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const validateForm = () =>{
+    const [loading, setLoading] = useState(false);
+    const isFormValid = () =>{
         if(
             firstName === "" || 
             lastName === "" || 
@@ -30,15 +31,19 @@ export default () => {
             password === ""
             ) {
             alert("All fields are required.");
-            return;
+            return false;
         }
         if (!isEmail(email)){
             alert("Please add a valid email.");
-            return;
+            return false;
         }
+        return true;
     };
     const handleSubmit = async () => {
-        validateForm();
+        if (!isFormValid()){
+            return;
+        };
+        setLoading(true);
         try {
             const { status } = await createAccount({
                 first_name: firstName,              // first_name -> (airbnb-api/users/serializers.py의 UserSerializer의 이름 형식을 그대로 가져온 것)
@@ -47,10 +52,15 @@ export default () => {
                 username: email,
                 password
             });
-            console.log(status);
+            if(status === 201){
+                alert("Account created. Sign in please.");
+                navigate("SignIn", { email, password });        // SignIn에 email, passwod를 보내자
+            }
             // go to Sign In
         } catch(e){
-            console.warn(e);
+            alert(e);
+        } finally {
+            setLoading(false);
         }
     };
     const dismissKeyboard = () => Keyboard.dismiss();
@@ -85,7 +95,7 @@ export default () => {
                                 stateFn={setPassword}    
                             />
                         </InputContainer>
-                        <Btn text={"Sign Up"} accent onPress={handleSubmit} />
+                        <Btn loading={loading} text={"Sign Up"} accent onPress={handleSubmit} />
                         </KeyboardAvoidingView>
                 </Container>
             </DismissKeyboard>

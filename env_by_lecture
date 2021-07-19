@@ -1758,3 +1758,451 @@ export default userSlice.reducer;
                     const baseUrl = "http://~~.ngrok.io/api/v1";
 
             위 방식으로 하면, 핸드폰, emulator 모두 api서버와 통신 된다.
+            * 일정 시간 지나면 연결 끊기는 것 같음. 이럴때는 다시 url 받아서 교체해서 사용
+
+
+# 8.9 Create Account part Two
+    이번에는 state에 [loading, setLoading]을 입력해주자
+    (screens/Auth/SignUp.js)
+        export default() => {
+            const [loading, setLoading] = useState(false);
+        }
+
+    form이 검증되면 setLoading(true)로 설정
+    그리고 마지막에는 finally를 넣어서, 그 안에서 setLoading(false)를 실행 -> try가 되든, catch가 되든 finally는 작동 된다.
+    Btn에 loading이라는 prop 추가
+
+    (screens/Auth/SignUp.js)
+        import React, { useState } from "react";
+        import { StatusBar, KeyboardAvoidingView } from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+        import { isEmail } from "../../utils";
+        import { createAccount } from "../../api";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default (navigation) => {
+            const [firstName, setFirstname] = useState("");
+            const [lastName, setLastname] = useState("");
+            const [email, setEmail] = useState("");
+            const [password, setPassword] = useState("");
+            const [loading, setLoading] = useState(false);
+            const isFormValid = () =>{
+                if(
+                    firstName === "" || 
+                    lastName === "" || 
+                    email === "" || 
+                    password === ""
+                    ) {
+                    alert("All fields are required.");
+                    return false;
+                }
+                if (!isEmail(email)){
+                    alert("Please add a valid email.");
+                    return false;
+                }
+                return true;
+            };
+            const handleSubmit = async () => {
+                if (!isFormValid()){
+                    return;
+                };
+                setLoading(true);
+                try {
+                    const { status } = await createAccount({
+                        first_name: firstName,              // first_name -> (airbnb-api/users/serializers.py의 UserSerializer의 이름 형식을 그대로 가져온 것)
+                        last_name: lastName,
+                        email,
+                        username: email,
+                        password
+                    });
+                    if(status === 201){
+                        alert("Account created. Sign in please.");
+                        navigation.navigate("SignIn");
+                    }
+                    // go to Sign In
+                } catch(e){
+                    alert(e);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            const dismissKeyboard = () => Keyboard.dismiss();
+            return(
+                    <DismissKeyboard>
+                        <Container>
+                            <StatusBar barStyle="light-content" />
+                                <KeyboardAvoidingView>
+                                <InputContainer>
+                                    <Input 
+                                        value={firstName} 
+                                        placeholder="First name" 
+                                        autoCapitalize="words" 
+                                        stateFn={setFirstname}
+                                    />
+                                    <Input 
+                                        value={lastName} 
+                                        placeholder="Last name" 
+                                        autoCapitalize="words" 
+                                        stateFn={setLastname}
+                                    />
+                                    <Input
+                                        keyboardType={"email-address"}
+                                        value={email} 
+                                        placeholder="E-mail" 
+                                        autoCapitalize="none" 
+                                        stateFn={setEmail}
+                                    />
+                                    <Input 
+                                        value={password} 
+                                        placeholder="Password" 
+                                        stateFn={setPassword}    
+                                    />
+                                </InputContainer>
+                                <Btn loading={loading} text={"Sign Up"} accent onPress={handleSubmit} />
+                                </KeyboardAvoidingView>
+                        </Container>
+                    </DismissKeyboard>
+            );
+        };
+
+    (components/Auth/Btn.js)
+        import React from "react";
+        import { ActivityIndicator, Dimensions, TouchableOpacity } from "react-native";
+        import styled from "styled-components/native";
+        import PropTypes from "prop-types"
+        import colors from "../../colors";
+
+        const { width } = Dimensions.get("screen")      
+
+        const Button = styled.View`
+            margin-bottom: 20px;
+            border: 1px solid ${props => (props.accent ? "transparent" : colors.black)};
+            border-radius: 10px;
+            padding: 15px 0px;
+            align-items: center;
+            width: ${width /2}px;           
+            background-color: ${props => (props.accent ? colors.red : "transparent")}
+            `;
+
+        const Text = styled.Text`
+            font-weight: 600;
+            font-size: 14px;
+            color: ${props => (props.accent ? "white" : "black")};
+        `;
+
+        const Btn = ({loading, onPress, text, accent = false}) => (
+            <TouchableOpacity onPress={loading ? null : onPress}>
+                <Button accent={accent}>
+                    {loading ? (
+                        <ActivityIndicator color={accent ? "white" : "black"}/>     // loading일 때 버튼이 안보이도록
+                    ) :(
+                        <Text accent={accent}>{text}</Text>
+                    )}
+                </Button>
+            </TouchableOpacity>
+        );
+
+        Btn.propTypes = {
+            onPress: PropTypes.func.isRequired,
+            text: PropTypes.string.isRequired,
+            acent: PropTypes.bool,
+            loading: PropTypes.bool
+        };
+
+        export default Btn;
+
+
+        * react navigation에 information을 같이 보내줄 수 있다. 하나의 스크린에서 다른 스크린으로
+            https://reactnavigation.org/docs/navigation-prop/
+
+            navigation.navigate(name, params) -> params(parameter)를 통해 보내줄 수 있다.
+                ex)
+                    function HomeScreen({ navigation: { navigate } }) {
+                    return (
+                        <View>
+                        <Text>This is the home screen of the app</Text>
+                        <Button
+                            onPress={() =>
+                            navigate('Profile', { names: ['Brent', 'Satya', 'Michaś'] })    # Profile로 이동시켜주는데, 오른쪽에 나열한 것들을 이동시켜준다.
+                            }
+                            title="Go to Brent's profile"
+                        />
+                        </View>
+                    );
+                    }
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import { StatusBar, KeyboardAvoidingView } from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+        import { isEmail } from "../../utils";
+        import { createAccount } from "../../api";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default ({navigation: { navigate } }) => {
+            const [firstName, setFirstname] = useState("");
+            const [lastName, setLastname] = useState("");
+            const [email, setEmail] = useState("");
+            const [password, setPassword] = useState("");
+            const [loading, setLoading] = useState(false);
+            const isFormValid = () =>{
+                if(
+                    firstName === "" || 
+                    lastName === "" || 
+                    email === "" || 
+                    password === ""
+                    ) {
+                    alert("All fields are required.");
+                    return false;
+                }
+                if (!isEmail(email)){
+                    alert("Please add a valid email.");
+                    return false;
+                }
+                return true;
+            };
+            const handleSubmit = async () => {
+                if (!isFormValid()){
+                    return;
+                };
+                setLoading(true);
+                try {
+                    const { status } = await createAccount({
+                        first_name: firstName,              // first_name -> (airbnb-api/users/serializers.py의 UserSerializer의 이름 형식을 그대로 가져온 것)
+                        last_name: lastName,
+                        email,
+                        username: email,
+                        password
+                    });
+                    if(status === 201){
+                        alert("Account created. Sign in please.");
+                        navigate("SignIn", { email, password });        // SignIn에 email, passwod를 보내자
+                    }
+                    // go to Sign In
+                } catch(e){
+                    alert("The email is taken");
+                } finally {
+                    setLoading(false);
+                }
+            };
+            const dismissKeyboard = () => Keyboard.dismiss();
+            return(
+                    <DismissKeyboard>
+                        <Container>
+                            <StatusBar barStyle="light-content" />
+                                <KeyboardAvoidingView>
+                                <InputContainer>
+                                    <Input 
+                                        value={firstName} 
+                                        placeholder="First name" 
+                                        autoCapitalize="words" 
+                                        stateFn={setFirstname}
+                                    />
+                                    <Input 
+                                        value={lastName} 
+                                        placeholder="Last name" 
+                                        autoCapitalize="words" 
+                                        stateFn={setLastname}
+                                    />
+                                    <Input
+                                        keyboardType={"email-address"}
+                                        value={email} 
+                                        placeholder="E-mail" 
+                                        autoCapitalize="none" 
+                                        stateFn={setEmail}
+                                    />
+                                    <Input 
+                                        value={password} 
+                                        placeholder="Password" 
+                                        stateFn={setPassword}    
+                                    />
+                                </InputContainer>
+                                <Btn loading={loading} text={"Sign Up"} accent onPress={handleSubmit} />
+                                </KeyboardAvoidingView>
+                        </Container>
+                    </DismissKeyboard>
+            );
+        };
+
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default props => {           //다음 두줄과 같이 해주면, SignUp.js에서 "route" prop을 통해서 "params"에 email과 password 값이 console.log를 통해서 오는 것 확인 가능
+            console.log(props)
+            const [username, setUsername] = useState("");
+            const [password, setPassword] = useState("");
+            const handleSubmit = () => alert(`${username}${password}`);
+            return(
+                <DismissKeyboard>
+                    <Container>
+                        <StatusBar barStyle="light-content" />
+                        <KeyboardAvoidingView behavior='position'>
+                        <InputContainer>
+                            <Input 
+                                value={username} 
+                                placeholder="Username" 
+                                autoCapitalize="none" 
+                                stateFn={setUsername}
+                            />
+                            <Input 
+                                value={password} 
+                                placeholder="Password" 
+                                stateFn={setPassword}    
+                            />
+                        </InputContainer>
+                        <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                        </KeyboardAvoidingView>
+                    </Container>
+                </DismissKeyboard>
+            );
+        };
+
+        // 이제 prop에서 route에서 params를 가져오면서 그 안에 email이랑 password를 가져오자
+            Object {
+            "navigation": Object {
+                "addListener": [Function addListener],
+                "canGoBack": [Function canGoBack],
+                "dangerouslyGetParent": [Function dangerouslyGetParent],
+                "dangerouslyGetState": [Function anonymous],
+                "dispatch": [Function dispatch],
+                "goBack": [Function anonymous],
+                "isFocused": [Function isFocused],
+                "navigate": [Function anonymous],
+                "pop": [Function anonymous],
+                "popToTop": [Function anonymous],
+                "push": [Function anonymous],
+                "removeListener": [Function removeListener],
+                "replace": [Function anonymous],
+                "reset": [Function anonymous],
+                "setOptions": [Function setOptions],
+                "setParams": [Function anonymous],
+            },
+            "route": Object {
+                "key": "SignIn-cQbWvaU4QF3deWecK91dt",
+                "name": "SignIn",
+                "params": Object {
+                "email": "gkgqqkgk@naver.com",
+                "password": "432",
+                },
+            },
+            }
+            Object {
+            "navigation": Object {
+                "addListener": [Function addListener],
+                "canGoBack": [Function canGoBack],
+                "dangerouslyGetParent": [Function dangerouslyGetParent],
+                "dangerouslyGetState": [Function anonymous],
+                "dispatch": [Function dispatch],
+                "goBack": [Function anonymous],
+                "isFocused": [Function isFocused],
+                "navigate": [Function anonymous],
+                "pop": [Function anonymous],
+                "popToTop": [Function anonymous],
+                "push": [Function anonymous],
+                "removeListener": [Function removeListener],
+                "replace": [Function anonymous],
+                "reset": [Function anonymous],
+                "setOptions": [Function setOptions],
+                "setParams": [Function anonymous],
+            },
+            "route": Object {
+                "key": "SignIn-2-414T0EzZLIq14xHrDB-",
+                "name": "SignIn",
+                "params": Object {
+                "email": "fhdij@hag.com",
+                "password": "123",
+                },
+            },
+            }
+
+        export default ({route: {params: {email, password}}}) => { 이런식으로 가져오려고 하면, 그 아랫줄에 password가 이미 선언되어 있다는 오류가 있어서 다음과 같이 수정
+        export default ({route: { params }}) => {
+        그리고 useState에 params?.email을 통해 값을 가져오자
+            params?.email -> params에 값이 있을때 params.email을 가져온다는 의미 (아무것도 입력 안하고 SignUp할때를 고려한 것) - 이런걸 optional chaining 라고 하는 듯
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default ({route: { params }}) => {
+            const [username, setUsername] = useState(params?.email);
+            const [password, setPassword] = useState(params?.password);
+            const handleSubmit = () => alert(`${username}${password}`);
+            return(
+                <DismissKeyboard>
+                    <Container>
+                        <StatusBar barStyle="light-content" />
+                        <KeyboardAvoidingView behavior='position'>
+                        <InputContainer>
+                            <Input 
+                                value={username} 
+                                placeholder="Username" 
+                                autoCapitalize="none" 
+                                stateFn={setUsername}
+                            />
+                            <Input 
+                                value={password} 
+                                placeholder="Password" 
+                                stateFn={setPassword}    
+                            />
+                        </InputContainer>
+                        <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                        </KeyboardAvoidingView>
+                    </Container>
+                </DismissKeyboard>
+            );
+        };
