@@ -17,8 +17,9 @@ const Container = styled.TextInput`
     margin-bottom: 20px;
 `;
 
-const Input = ({value, placeholder, isPassword=false, autoCapitalize, stateFn}) => (
-    <Container 
+const Input = ({value, placeholder, isPassword=false, autoCapitalize, stateFn, keyboardType}) => (
+    <Container
+        keyboardType={keyboardType}
         value={value} 
         placeholder={placeholder} 
         secureTextEntry={isPassword ? true: false} 

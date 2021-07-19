@@ -1576,4 +1576,185 @@ export default userSlice.reducer;
         // data: (post를 할때) 사용자를 생성할 때 data를 보낸다. (get을 할때는 필요없지만)
         // jwt
 
-        export const createAccount = form => callApi("post", "/users/", form);
+        export const createAccount = form => callApi("post", "/users/", form);      // Sign In을 할때 함수를 호출하는 방식은 다를 것이다. -> 왜냐하면 Sign In을 할 때는 Redux를 통해 호출할 것이기 때문
+
+
+# 8.8 Create Account part One
+    Redux를 사용하지 않고 사용자 생성을 해보자 -> Redux는 로그인을 할때는 관여 하지만, 유저 생성을 할때는 딱히 관여하지 않는다.
+
+    (components/Auth/Input.js)
+        import React from "react";
+        import { Dimensions, TouchableOpacity } from "react-native";
+        import styled from "styled-components/native";
+        import PropTypes from "prop-types"
+        import colors from "../../colors";
+
+
+
+        const { width } = Dimensions.get("screen")      
+
+        const Container = styled.TextInput`
+            width: ${width/2}px;
+            padding: 12.5px 10px;
+            border: 1px solid ${colors.black};
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        `;
+
+        const Input = ({value, placeholder, isPassword=false, autoCapitalize, stateFn, keyboardType}) => (      // 이부분 추가해준 것임
+            <Container
+                KeyboardType={keyboardType}         // 이부분 추가해준 것임
+                value={value} 
+                placeholder={placeholder} 
+                secureTextEntry={isPassword ? true: false} 
+                autoCapitalize={autoCapitalize}
+                onChangeText = {(text) => stateFn(text)}
+            />
+        );
+
+        Input.propTypes = {
+            value: PropTypes.string,
+            placeholder: PropTypes.string,
+            isPassword: PropTypes.bool,
+            autoCapitalize: PropTypes.string,
+            stateFn: PropTypes.func.isRequired
+        }
+
+        export default Input;
+
+
+    email을 정규식으로 검증하자.
+        emailregex.com ->구글에 is email regular expression 입력하면 나옴
+            General Email Regex를 복사
+            (utils.js)에 아래와 같이 입력 /와 /; 사이에 복붙
+                export const isEmail = (email) => {
+                    const regEx =  /복붙/;
+                    return regEx.test(email);
+                };
+                // 간단한 email validation 함수를 작성해준것임
+                            
+    (screens/Auth/SignUp.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView, Keyboard} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+        import { isEmail } from "../../utils";
+        import { createAccount } from "../../api";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default () => {
+            const [firstName, setFirstname] = useState("");
+            const [lastName, setLastname] = useState("");
+            const [email, setEmail] = useState("");
+            const [password, setPassword] = useState("");
+            const validateForm = () =>{
+                if(
+                    firstName === "" || 
+                    lastName === "" || 
+                    email === "" || 
+                    password === ""
+                    ) {
+                    alert("All fields are required.");
+                    return;
+                }
+                if(!isEmail(email)){
+                    alert("Please add a valid email.");
+                    return;
+                }
+            }
+            const handleSubmit = async() => {
+                validateForm();
+                try {                                       // 이렇게 해주고 SignUp을 통해 User 생성해주면 됨 -> Django Admin page에서 확인
+                    const data = await createAccount({
+                        first_name: firstName,              // first_name -> (airbnb-api/users/serializers.py의 UserSerializer의 이름 형식을 그대로 가져온 것)
+                        last_name: lastName,
+                        email,
+                        username: email,
+                        password
+                    });
+                    console.log(data);              // 이렇게 해주면 여러가지 것들 나오는데, 그중 접속상태를 알려주는 status 를 이용 할 것임  ->   const data는 const { status }로, console.log(data)는 console.log(status)로 바꿔서 유저생성할때 상태가 어떤지 확인할 것임
+                } catch(e){
+                    console.warn(e);
+                }
+            };
+            const dismissKeyboard = () => Keyboard.dismiss();
+            return(
+                    <DismissKeyboard>
+                        <Container>
+                            <StatusBar barStyle="light-content" />
+                                <KeyboardAvoidingView>
+                                <InputContainer>
+                                    <Input 
+                                        value={firstName} 
+                                        placeholder="First name" 
+                                        autoCapitalize="words" 
+                                        stateFn={setFirstname}
+                                    />
+                                    <Input 
+                                        value={lastName} 
+                                        placeholder="Last name" 
+                                        autoCapitalize="words" 
+                                        stateFn={setLastname}
+                                    />
+                                    <Input
+                                        keyboardType={"email-address"}
+                                        value={email} 
+                                        placeholder="E-mail" 
+                                        autoCapitalize="none" 
+                                        stateFn={setEmail}
+                                    />
+                                    <Input 
+                                        value={password} 
+                                        placeholder="Password" 
+                                        stateFn={setPassword}    
+                                    />
+                                </InputContainer>
+                                <Btn text={"Sign Up"} accent onPress={handleSubmit} />
+                                </KeyboardAvoidingView>
+                        </Container>
+                    </DismissKeyboard>
+            );
+        };
+
+        // Android Studio에서 바로 생성되어야 하고, 
+            나는 안되었음. 
+            (api.js)
+                import axios from "axios";
+
+
+                const callApi = async(method, path, data, jwt) => {
+                    const headers = {
+                        Authorization: jwt,
+                        "Content-Type": "application/json"
+                    };
+                    const baseUrl = "http://10.0.2.2:8000/api/v1";          # 127.0.0.1 대신 10.0.2.2 를 이용하니 emulator에서 user 생성 가능했음 https://stackoverflow.com/questions/5528850/how-do-you-connect-localhost-in-the-android-emulator. 아직 모바일은 해결 X
+                    const fullUrl = `${baseUrl}${path}`;
+                    if(method === "get" || method === "delete"){
+                        return axios[method](fullUrl, {headers});
+                    } else{
+                        return axios[method](fullUrl, data, {headers});
+                    }
+                };
+
+
+                export const createAccount = form => callApi("post", "/users/", form);
+        //모바일에서는 ngrok을 통해서 휴대폰으로 접속할 수 있게 설정을 해주어야 가능
+            * ngrok 이용해서 휴대폰 접속하기: https://wayhome25.github.io/django/2017/03/18/django-ep1-setting/
+                1. ngrok을 다운받고, 압축을 해재한 후, 실행파일을 manage.py가 있는 곳과 같은 경로에 둔다.
+                2. 실행: ngrok http 8000 (Django의 default 포트가 8000, 그리고 manage.py를 첫경로에서 실행했기 때문에 ./ngrok 등이 아니라 바로 ngrok http 8000 으로 실행)
+                3. http://~~.ngrok.io -> http://localhost:8000이 생기는데 이를 복사해서 (api.js)의 baseUrl에 이용
+                    const baseUrl = "http://~~.ngrok.io/api/v1";
+
+            위 방식으로 하면, 핸드폰, emulator 모두 api서버와 통신 된다.

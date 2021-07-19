@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import {StatusBar, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard} from "react-native";
+import { StatusBar, KeyboardAvoidingView } from "react-native";
 import styled from "styled-components/native";
 import Btn from "../../components/Auth/Btn";
 import Input from "../../components/Auth/Input";
 import DismissKeyboard from "../../components/DismissKeyboard";
+import { isEmail } from "../../utils";
+import { createAccount } from "../../api";
 
 const Container = styled.View`
     flex:1 ;
@@ -16,11 +18,41 @@ const InputContainer = styled.View`
 `;
 
 export default () => {
-    const [firstname, setFirstname] = useState("");
-    const [lastname, setLastname] = useState("");
-    const [username, setUsername] = useState("");
+    const [firstName, setFirstname] = useState("");
+    const [lastName, setLastname] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const handleSubmit = () => alert(`${username}${password}`);
+    const validateForm = () =>{
+        if(
+            firstName === "" || 
+            lastName === "" || 
+            email === "" || 
+            password === ""
+            ) {
+            alert("All fields are required.");
+            return;
+        }
+        if (!isEmail(email)){
+            alert("Please add a valid email.");
+            return;
+        }
+    };
+    const handleSubmit = async () => {
+        validateForm();
+        try {
+            const { status } = await createAccount({
+                first_name: firstName,              // first_name -> (airbnb-api/users/serializers.py의 UserSerializer의 이름 형식을 그대로 가져온 것)
+                last_name: lastName,
+                email,
+                username: email,
+                password
+            });
+            console.log(status);
+            // go to Sign In
+        } catch(e){
+            console.warn(e);
+        }
+    };
     const dismissKeyboard = () => Keyboard.dismiss();
     return(
             <DismissKeyboard>
@@ -29,22 +61,23 @@ export default () => {
                         <KeyboardAvoidingView>
                         <InputContainer>
                             <Input 
-                                value={firstname} 
+                                value={firstName} 
                                 placeholder="First name" 
-                                autoCapitalize="none" 
+                                autoCapitalize="words" 
                                 stateFn={setFirstname}
                             />
                             <Input 
-                                value={lastname} 
+                                value={lastName} 
                                 placeholder="Last name" 
-                                autoCapitalize="none" 
+                                autoCapitalize="words" 
                                 stateFn={setLastname}
                             />
-                            <Input 
-                                value={username} 
-                                placeholder="Username" 
+                            <Input
+                                keyboardType={"email-address"}
+                                value={email} 
+                                placeholder="E-mail" 
                                 autoCapitalize="none" 
-                                stateFn={setUsername}
+                                stateFn={setEmail}
                             />
                             <Input 
                                 value={password} 
