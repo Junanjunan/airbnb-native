@@ -1535,3 +1535,45 @@ export default userSlice.reducer;
             );
         }
 
+
+# 8.7 apiClient
+    API를 이용해서 SignUp, SignIn 등 해볼 것인데, 이를 위해서 Axios 패키지를 설치, 이용
+        $ npm install axios
+        axios는 API와 데이터를 주고받는 패키지임
+
+    (api.js) 생성
+        import axios from "axios";
+
+        export const createAccount = axios.post("http://127.0.0.1:8000/api/v1/users", {});   // login에도 똑같이 처리해줘야 하기 때문에 좋지 못한 방식
+        export const login = axios.post("http://127.0.0.1:8000/api/v1/users/login/" {});
+        axios.get("URL", {jwt})       // profile 같은 경우는 다음과 같은 식으로 처리  
+
+        // 함수 하나를 만들어서 API랑 상호수신하도록 하는 더 좋은 방법이 있다.
+
+    (api.js)
+        import axios from "axios";
+
+        // make easy request without URL copypasting.
+        // make post, get, delete, put requests.
+        // send jwt automatically
+
+        const callApi = async(method, path, data, jwt) => {
+            const headers = {
+                Authorization: jwt,                     // 기본적으로 JWT는 authorization에 넣어주어야 함
+                "Content-Type": "application/json"
+            };
+            const baseUrl = "http://127.0.0.1:8000/api/v1";
+            const fullUrl = `${baseUrl}${path}`;
+            if(method === "get" || method === "delete"){
+                axios.delete()
+                return axios[method](fullUrl, {headers});
+            } else{                                             // axios.get() 이나, axios.put() 등으로 하고 괄호 안에 무엇이 들어가야 하는지 참조사항을 보면, put등에는 get에는 없어도 되는 data 등이 필요함
+                return axios[method](fullUrl, data, {headers});
+            }
+        };
+        // method: post, get, delete 등
+        // path: /users, /users/login 등
+        // data: (post를 할때) 사용자를 생성할 때 data를 보낸다. (get을 할때는 필요없지만)
+        // jwt
+
+        export const createAccount = form => callApi("post", "/users/", form);
