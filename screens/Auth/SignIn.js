@@ -16,9 +16,23 @@ const InputContainer = styled.View`
 `;
 
 export default ({route: { params }}) => {
-    const [username, setUsername] = useState(params?.email);
+    const [email, setEmail] = useState(params?.email);
     const [password, setPassword] = useState(params?.password);
-    const handleSubmit = () => alert(`${username}${password}`);
+    const isFormValid = () => {
+        if(email === "" || password === ""){
+            alert("All fields are required.");
+            return false;
+        }
+        if(!isEmail(email)){
+            alert("Email is invalid")
+            return false;
+        }
+    }
+    const handleSubmit = () => {
+        if(!isFormValid()) {
+            return;
+        }
+    };
     return(
         <DismissKeyboard>
             <Container>
@@ -26,10 +40,10 @@ export default ({route: { params }}) => {
                 <KeyboardAvoidingView behavior='position'>
                 <InputContainer>
                     <Input 
-                        value={username} 
-                        placeholder="Username" 
-                        autoCapitalize="none" 
-                        stateFn={setUsername}
+                        value={email} 
+                        placeholder="E-mail" 
+                        keyboardType="email-address"
+                        stateFn={setEmail}
                     />
                     <Input 
                         value={password} 

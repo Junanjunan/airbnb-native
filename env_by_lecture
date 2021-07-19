@@ -2206,3 +2206,147 @@ export default userSlice.reducer;
                 </DismissKeyboard>
             );
         };
+
+
+# 8.9 Log In part One
+    SignUp에서는 dispatch해줄 것이 없어서 redux를 사용하지 않았다.
+    SignIn에는 dispatch를 할것이라 redux 사용
+    token을 받을 것이다.
+    token이 Login으로 보내져서 state로 갈것이다.(redux/usersSlice.js에 있는 reducers의 login에 있는 state)      *** 매우 중요
+        두가지 옵션
+        1. component body에 SignUp.js에서 이용했던 handleSubmit 같은 함수를 작성 -> handleSubmit에서 login을 dispatch 할 수 있다.
+        2. dispatch를 내장한 함수를 만든다.
+            이렇게 만든 함수는 깔끔하고, await도 사용할 수 있을 것이다. 그리고 같은 함수안에서 dispatch도 사용 가능하고
+
+    2를 해보자?
+    
+    (api.js)
+        export const login = form => callApi("post", "/users/login", form); // 맨 아래 추가
+
+    (redux/usersSlice.js)
+        export const userLogin = (form) => async dispatch => {      // (form) => async dispatch => : 새로운 syntax - 기존에 구현하던 것들을 새로운 syntax로 간단하게 구현한다 이해하자
+
+        }
+        
+        ##
+        const userLogin = (form) => async dispatch => {
+
+        }
+        는 다음과 같다.
+        function userLogin(forms){
+            return function(dispatch){
+
+            }
+        }
+
+        form을 받는 userLogin이라는 함수는 dispatch를 받는 함수를 return 해준다.
+        dispatch를 받는 함수를 return해주는, (form을 받는) userLogin이라는 함수를 표현하는 것
+            한마디로 다른 함수를 return 해주는 함수이다. (functional programming에서 많이 보게 될 것)
+            
+        다음과 같이 실행하면 된다.(?)
+
+        userLogin(form)(dispatch);
+            redux에서 본적 있을 것이다.
+                connect(map, map)(component)
+
+    (redux/usersSlice.js)
+        import { createSlice } from "@reduxjs/toolkit"
+        import { login } from "../api";
+
+
+        const userSlice = createSlice({
+            name: "users",
+            initialState: {
+                isLoggedIn: false,
+                token: null
+            },
+            reducers: {
+                logIn(state, action){
+                    state.isLoggedIn = true;
+                    state.token = action.payload.token;
+                },
+                logOut(state, action){
+                    state.isLoggedIn = false;
+                    state.token = null;
+                }
+            }
+        })
+
+        export const {logIn, logOut} = userSlice.actions;
+
+        export const userLogin = (form) => async dispatch => {      // 이렇게 작성하는 이유는 다른 component를 안건드리고 dispatch 옆에 async await를 사용하기 위해서이다.
+            try{
+                const data = await login(form);
+                console.log(data);
+                ///dispatch login()
+            } catch(e){
+                alert(e)            // 강의에서는 alert("Wrong user/password") 나는 구체적인 오류를 보기 위해 alert(e)
+            }
+        }
+
+
+        export default userSlice.reducer;
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default ({route: { params }}) => {
+            const [email, setEmail] = useState(params?.email);
+            const [password, setPassword] = useState(params?.password);
+            const isFormValid = () => {
+                if(email === "" || password === ""){
+                    alert("All fields are required.");
+                    return false;
+                }
+                if(!isEmail(email)){
+                    alert("Email is invalid")
+                    return false;
+                }
+            }
+            const handleSubmit = () => {
+                if(!isFormValid()) {
+                    return;
+                }
+            };
+            return(
+                <DismissKeyboard>
+                    <Container>
+                        <StatusBar barStyle="light-content" />
+                        <KeyboardAvoidingView behavior='position'>
+                        <InputContainer>
+                            <Input 
+                                value={email} 
+                                placeholder="E-mail" 
+                                keyboardType="email-address"
+                                stateFn={setEmail}
+                            />
+                            <Input 
+                                value={password} 
+                                placeholder="Password" 
+                                stateFn={setPassword}    
+                            />
+                        </InputContainer>
+                        <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                        </KeyboardAvoidingView>
+                    </Container>
+                </DismissKeyboard>
+            );
+        };
+
+                    
+
