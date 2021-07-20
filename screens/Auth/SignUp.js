@@ -5,7 +5,9 @@ import Btn from "../../components/Auth/Btn";
 import Input from "../../components/Auth/Input";
 import DismissKeyboard from "../../components/DismissKeyboard";
 import { isEmail } from "../../utils";
-import { createAccount } from "../../api";
+import api from "../../api";
+
+api
 
 const Container = styled.View`
     flex:1 ;
@@ -45,7 +47,7 @@ export default ({navigation: { navigate } }) => {
         };
         setLoading(true);
         try {
-            const { status } = await createAccount({
+            const { status } = await api.createAccount({
                 first_name: firstName,              // first_name -> (airbnb-api/users/serializers.py의 UserSerializer의 이름 형식을 그대로 가져온 것)
                 last_name: lastName,
                 email,

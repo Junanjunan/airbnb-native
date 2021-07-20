@@ -2348,5 +2348,228 @@ export default userSlice.reducer;
             );
         };
 
-                    
 
+# 8.11 Log In part Two
+    
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default ({route: { params }}) => {
+            const [email, setEmail] = useState(params?.email);
+            const [password, setPassword] = useState(params?.password);
+            const isFormValid = () => {
+                if(email === "" || password === ""){
+                    alert("All fields are required.");
+                    return false;
+                }
+                if(!isEmail(email)){
+                    alert("Email is invalid")
+                    return false;
+                }
+                return true
+            };
+            const handleSubmit = () => {            // 여기서 dispatch login을 해야한다 문제는 api의 login이랑 naming이 겹친다?? 어쨌든  api.js에서 바로 export 해주기 보다 api.js 에서 object로 만들자
+                if(!isFormValid()) {
+                    return;
+                }
+            };
+            return(
+                <DismissKeyboard>
+                    <Container>
+                        <StatusBar barStyle="light-content" />
+                        <KeyboardAvoidingView behavior='position'>
+                        <InputContainer>
+                            <Input 
+                                value={email} 
+                                placeholder="E-mail" 
+                                keyboardType="email-address"
+                                stateFn={setEmail}
+                            />
+                            <Input 
+                                value={password} 
+                                placeholder="Password" 
+                                stateFn={setPassword}    
+                            />
+                        </InputContainer>
+                        <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                        </KeyboardAvoidingView>
+                    </Container>
+                </DismissKeyboard>
+            );
+        };
+            
+    (api.js)
+        import axios from "axios";
+
+
+        const callApi = async(method, path, data, jwt) => {
+            const headers = {
+                Authorization: jwt,
+                "Content-Type": "application/json"
+            };
+            // const baseUrl = "http://10.0.2.2:8000/api/v1";
+            // const baseUrl = "http://127.0.0.1:8000/api/v1";
+            const baseUrl = "http://843f4f597242.ngrok.io/api/v1";
+            const fullUrl = `${baseUrl}${path}`;
+            if(method === "get" || method === "delete"){
+                return axios[method](fullUrl, {headers});
+            } else{
+                return axios[method](fullUrl, data, {headers});
+            }
+        };
+
+
+        // export const createAccount = form => callApi("post", "/users/", form);      // SignIn.js에서 언급한, 바로 export 하지 말고 object로 만든 후 export 하자
+        // export const login = form => callApi("post", "/users/login", form);
+
+        export default {                                                // 이렇게 해준후에는 SignUp.js 에서 createAccount 수정 / usersSlice.js에서 login 수정
+            createAccount: form => callApi("post", "/users/", form),
+            login: form => callApi("post", "/users/login/", form),
+        }
+
+    (screens/Auth/SignUp.js)
+        import api from "../../api";
+
+        const { status } = await api.createAccount({
+
+    (redux/usersSlice.js)
+        import api from "../api"
+
+        const data = await api.login(form);
+
+    여기까지 하고 userLogin을 dispatch 해보자
+
+    (screens/Auth/SignIn.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView} from "react-native";
+        import { useDispatch } from "react-redux";
+        import styled from "styled-components/native";
+        import Btn from "../../components/Auth/Btn";
+        import Input from "../../components/Auth/Input";
+        import DismissKeyboard from "../../components/DismissKeyboard";
+        import { userLogin } from "../../redux/usersSlice";
+        import { isEmail } from "../../utils";
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default ({route: { params }}) => {
+            const dispatch = useDispatch();
+            const [email, setEmail] = useState(params?.email);
+            const [password, setPassword] = useState(params?.password);
+            const isFormValid = () => {
+                if(email === "" || password === ""){
+                    alert("All fields are required.");
+                    return false;
+                }
+                if(!isEmail(email)){
+                    alert("Email is invalid")
+                    return false;
+                }
+                return true
+            };
+            const handleSubmit = () => {            // 여기서 dispatch login을 해야한다 문제는 api의 login이랑 naming이 겹친다?? 어쨌든  api.js에서 바로 export 해주기 보다 api.js 에서 object로 만들자
+                if(!isFormValid()) {
+                    return;
+                }
+                dispatch(userLogin({
+                    username: email,                    // django에서 username, password 필요
+                    password
+                }))
+            };
+
+    이렇게 해주고 save를 해주면, usersSlice.js에서 console.log(data)를 통해서 id와 token을 받는 것을 확인할 수 있다.
+    이를 이용해보자
+
+    (redux/usersSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const userSlice = createSlice({
+            name: "users",
+            initialState: {
+                isLoggedIn: false,
+                token: null
+            },
+            reducers: {
+                logIn(state, action){
+                    state.isLoggedIn = true;
+                    state.token = action.payload.token;
+                },
+                logOut(state, action){
+                    state.isLoggedIn = false;
+                    state.token = null;
+                }
+            }
+        });
+
+        export const {logIn, logOut} = userSlice.actions;
+
+        export const userLogin = form => async dispatch => {
+            try{
+                const { 
+                    data: { id, token } 
+                }= await api.login(form);
+                if (id && token) {
+                    dispatch(logIn({ token }));     // isLoggedIn을 true로 해주고, token을 저장해줄것이다. 이제 SignIn을 하면, render를 잘해주는지 확인. 어떻게? components/Gate.js에 설정해준 isLoggedIn이 잘 작동해서 LogOut 화면으로 바뀌면 됨
+                }
+            } catch(e){
+                alert(e);            
+            }
+        }
+
+
+        export default userSlice.reducer;
+
+    이제 SignIn을 해주고 React Native Debugger를 켜보자
+    실행, Ctrl+t, 모바일(emulator)에서 Debug Remote JS 실행해보자
+    State > userReducer 에서 isLoggedIn: true이고 token도 저장되었음을 확인 가능
+
+    여기까지해서 createAccount와 login을 만들어 낸것이다!!
+
+    이제 main navigator를 만들자
+
+    (screens/Main) 폴더를 만들고 Main 안에 Explore.js, Map.js, Profile.js, Saved.js 생성
+
+    (screens/Main/Saved.js)
+        import React from "react";
+        import styled from "styled-components/native";
+
+        const Container = styled.View`
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default () => (
+            <Container>
+                <Text>Saved</Text>      // 방금 만들어준 다른곳에는 이부분만 수정해주면 됨
+            </Container>
+        );
+
+## EXPLORE SCREEN
+
+# 9.0 Main Navigation part One
