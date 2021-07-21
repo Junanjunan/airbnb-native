@@ -31,5 +31,5 @@ export default ({route: { params }}) => {
             })
         );
     };
-    return <SignInPresenter />
+    return <SignInPresenter email={email} setEmail={setEmail} password={password} setPassword={setPassword} handleSubmit={handleSubmit} />
 };

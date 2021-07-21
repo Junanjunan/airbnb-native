@@ -16,7 +16,7 @@ const InputContainer = styled.View`
     margin-bottom: 30px;
 `;
 
-export default ({ email, setEmail, password, setPassword }) => {
+export default ({ email, setEmail, password, setPassword, handleSubmit }) => {
     return(
         <DismissKeyboard>
             <Container>
