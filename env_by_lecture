@@ -2558,6 +2558,7 @@ export default userSlice.reducer;
         import styled from "styled-components/native";
 
         const Container = styled.View`
+            flex: 1;
             justify-content: center;
             align-items: center;
         `;
@@ -2573,3 +2574,49 @@ export default userSlice.reducer;
 ## EXPLORE SCREEN
 
 # 9.0 Main Navigation part One
+
+    npm install @react-navigation/bottom-tabs
+
+
+    (nvigation/Main.js) 생성
+
+        import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+        import Explore from "../screens/Main/Explore";      // Tip: 키워드 입력하고 엔터해서 자동불러오기 하는데, 안되면 해당 파일을 열어주면 작동 될 것임
+        import MapScreen from "../screens/Main/Map";
+        import Profile from "../screens/Main/Profile";
+        import Saved from "../screens/Main/Saved";
+
+        const Main = createBottomTabNavigator();
+
+        export default () => <Main.Navigator>
+            <Main.Screen name="Explore" component={Explore}></Main.Screen>
+            <Main.Screen name="Saved" component={Saved}></Main.Screen>
+            <Main.Screen name="Map" component={MapScreen}></Main.Screen>
+            <Main.Screen name="Profile" component={Profile}></Main.Screen>
+        </Main.Navigator>
+
+    (components/Gate.js)
+        import React from "react";
+        import { View, Text, TouchableOpacity } from "react-native";
+        import { useDispatch, useSelector } from "react-redux";
+        import { logIn, logOut } from "../redux/usersSlice";
+        import Auth from "../navigation/Auth";
+        import { NavigationContainer } from "@react-navigation/native";
+        import Main from "../navigation/Main";
+
+
+        export default () => {
+            const { isLoggedIn } = useSelector(state => state.usersReducer);
+            const dispatch = useDispatch();
+            return (
+                <NavigationContainer>   
+                    {isLoggedIn ? <Main /> : <Auth />}
+                </NavigationContainer>
+            );
+        };
+
+    여기까지 하면 우선 navigation이 작동하는 것 확인 가능. 이제 더 꾸며보자
+
+    icon을 꾸미는 것에 대해서 자세히 말해보자면
+        screenOptions가 함수가 될수 있다. screenOptions는 route를 포함하고 있다.
+            즉, 현재 주소 위치가 어디인지 알 수 있다.
