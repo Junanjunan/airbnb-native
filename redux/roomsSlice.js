@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import api from "../api";
 
 const roomsSlice = createSlice({
     name: "rooms",
@@ -18,5 +19,17 @@ const roomsSlice = createSlice({
 });
 
 const { setExploreRooms } = roomsSlice.actions;
+
+export const getRooms = () => async dispatch => {
+    try {
+        const {data: {results}} = await api.rooms();
+        dispatch(setExploreRooms({
+            rooms: results,
+            page: 1
+        }));
+    } catch(e) {
+        // console.log(e)
+    }
+}
 
 export default roomsSlice.reducer;

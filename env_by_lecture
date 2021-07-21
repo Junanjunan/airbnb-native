@@ -2731,11 +2731,11 @@ export default userSlice.reducer;
     (redux/rootReducer.js)
         import { combineReducers } from "redux";
         import usersReducer from "./usersSlice";
-        import roomsSlice from "./roomsSlice";
+        import roomsReducer from "./roomsSlice";
 
         export default combineReducers({
             usersReducer,
-            roomsSlice
+            roomsReducer
         })
 
     (api.js)
@@ -2861,5 +2861,199 @@ export default userSlice.reducer;
     이렇게 한 후 기존에 있던 SignIn.js 삭제해주면 screens/Auth/SignIn에 있는 index.js 를 기본으로 가져온다.
     SignUp.js에도 똑같이 적용해줄 것이다.
 
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import styled from "styled-components/native";
 
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default () => (
+            <Container>
+                <Text>Explore</Text>
+            </Container>
+        );
+
+    (screens/Main/Explore/ExploreContainer.js)
+        import React from "react";
+        import ExplorePresenter from "./ExplorePresenter";
+
+        export default () => <ExplorePresenter />;
+
+    (screens/Main/Explore/index.js)
+        import ExploreContainer from "./ExploreContainer";
+
+        export default ExploreContainer;
+
+    
 # 9.3 Fetching Rooms
+    Explore에 하고싶은 것이 무엇이냐면, component가 mount 될 때 data를 fetch 하도록 하자(room을 get하자)
+
+    (screens/Main/Explore/index.js)
+        import { connect } from "react-redux";
+        import ExploreContainer from "./ExploreContainer";
+        import { getRooms } from "../../../redux/roomsSlice";
+
+        function mapDispatchToProps(dispatch){
+            return {
+                getRooms: () => dispatch(getRooms())
+            }
+        }
+
+        export default connect(null, mapDispatchToProps)(ExploreContainer);
+
+
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    state.explore.rooms.push(action.payload.rooms);
+                    state.explore.page = action.payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export const getRooms = () => async dispatch => {
+            try {
+                const {data} = await api.rooms();
+                console.log(data);
+            } catch(e) {
+
+            }
+        }
+
+        export default roomsSlice.reducer;
+
+    (screens/Main/Explore/ExploreContainer.js)
+        import React from "react";
+        import ExplorePresenter from "./ExplorePresenter";
+
+        export default props => {
+            console.log(props);
+            return <ExplorePresenter />;
+        };
+
+    이렇게 해주고 props가 출력되는 것을 보면, "getRooms"라는 함수가 있는 것을 알 수 있다. 이를 이제 이용
+
+    (screens/Main/Explore/ExploreContainer.js)
+        import React, { useEffect } from "react";
+        import ExplorePresenter from "./ExplorePresenter";
+
+        export default ({ getRooms }) => {
+            useEffect(() => {               // component mount가 useEffect를 사용할 때마다 execute 될 것이다.
+                getRooms();                 // 이렇게 하면, 우리는 rooms들의 첫 묶음들을 fetch 하는 것이다.
+            }, []);
+            return <ExplorePresenter />;
+        };
+
+    (screens/Main/Explore/index.js)
+        import ExploreContainer from "./ExploreContainer";
+        import { connect } from "react-redux";
+        import { getRooms } from "../../../redux/roomsSlice";
+
+
+        function mapDispatchToProps(dispatch){
+            return {
+                getRooms: () => dispatch(getRooms())
+            };
+        }
+
+        function mapStateToProps(state){
+            console.log(state.roomsReducer);
+            return {};
+        }
+
+        export default connect(mapStateToProps, mapDispatchToProps)(ExploreContainer);
+
+        이렇게 해주면 console.log에 explore 나타남. 이를 이용
+
+    (screens/Main/Explore/index.js)
+        import ExploreContainer from "./ExploreContainer";
+        import { connect } from "react-redux";
+        import { getRooms } from "../../../redux/roomsSlice";
+
+
+        function mapDispatchToProps(dispatch){
+            return {
+                getRooms: () => dispatch(getRooms())
+            };
+        }
+
+        function mapStateToProps(state){
+            return state.roomsReducer.explore;
+        }
+
+        export default connect(mapStateToProps, mapDispatchToProps)(ExploreContainer);
+
+    (screens/ExploreContainer.js)
+        import React, { useEffect } from "react";
+        import ExplorePresenter from "./ExplorePresenter";
+
+        export default ({ getRooms, rooms, page }) => {
+            useEffect(() => {               
+                getRooms();                 
+            }, []);
+            return <ExplorePresenter rooms={rooms} />;
+        };
+
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    state.explore.rooms.push(action.payload.rooms);
+                    state.explore.page = action.payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export const getRooms = () => async dispatch => {
+            try {
+                const {data: {results}} = await api.rooms();
+                dispatch(setExploreRooms({
+                    rooms: results,
+                    page: 1
+                }));
+            } catch(e) {
+                // console.log(e)
+            }
+        }
+
+        export default roomsSlice.reducer;
+
+    이렇게 해주고 React Native Debugger를 보자
+        state-roomsReducer-explore-rooms .. 뭐 더 설명하려고 했는데 아직 오류가 있음
+        다음 강의에서...
+
+
+# 9.4 Duplicate Bugfix
