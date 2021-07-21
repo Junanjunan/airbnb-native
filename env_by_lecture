@@ -2653,3 +2653,48 @@ export default userSlice.reducer;
             <Main.Screen name="Profile" component={Profile}></Main.Screen>
         </Main.Navigator>
         );
+
+
+# 9.1 Main Navigation part Two
+
+    (utils.js)
+        import { Platform } from "react-native";
+
+        export const isAndroid = () => Platform.OS === "android";
+
+        export const isEmail = (email) => {
+            const regEx =  /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
+            return regEx.test(email);
+        };
+
+    위와 같이 해도 작동하는데, 계속 사용할 거니까 아래와 같이 함수로 만들어주자
+    
+    (utils.js)
+        import { Platform } from "react-native";
+
+        export default {
+            isAndroid: () => Platform.OS === "android",
+            isEmail: (email) => {
+                const regEx =  /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
+                return regEx.test(email);
+            }
+        }
+
+    (components/Auth/BackBtn.js)
+        import React from "react";
+        import { Platform } from "react-native";
+        import styled from "styled-components/native";
+        import { Ionicons } from "@expo/vector-icons";
+        import utils from "../../utils";
+
+
+        const Container = styled.View`
+            padding-left:20px;
+        `
+
+        export default () => <Container><Ionicons 
+        name={utils.isAndroid() ? "md-arrow-back-circle": "md-arrow-back"}
+        size={28} 
+        /></Container>
+
+    SignUp.js, SignIn.js 에 있는 isEmail도 utils 를 호출해주고 utils.isEmail로 변경
