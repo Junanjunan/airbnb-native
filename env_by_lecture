@@ -2698,3 +2698,168 @@ export default userSlice.reducer;
         /></Container>
 
     SignUp.js, SignIn.js 에 있는 isEmail도 utils 를 호출해주고 utils.isEmail로 변경
+
+
+# 9.2 Rooms Slice and Cleanup
+    
+    room을 request 해보자
+    
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    state.explore.rooms.push(action.payload.rooms);
+                    state.explore.page = action.payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export default roomsSlice.reducer;
+
+    (redux/rootReducer.js)
+        import { combineReducers } from "redux";
+        import usersReducer from "./usersSlice";
+        import roomsSlice from "./roomsSlice";
+
+        export default combineReducers({
+            usersReducer,
+            roomsSlice
+        })
+
+    (api.js)
+        import axios from "axios";
+
+
+        const callApi = async(method, path, data, jwt) => {
+            const headers = {
+                Authorization: jwt,
+                "Content-Type": "application/json"
+            };
+            // const baseUrl = "http://10.0.2.2:8000/api/v1";
+            // const baseUrl = "http://127.0.0.1:8000/api/v1";
+            const baseUrl = "http://1d95240da570.ngrok.io/api/v1";
+            const fullUrl = `${baseUrl}${path}`;
+            if(method === "get" || method === "delete"){
+                return axios[method](fullUrl, {headers});
+            } else{
+                return axios[method](fullUrl, data, {headers});
+            }
+        };
+
+
+        export default {                                              
+            createAccount: form => callApi("post", "/users/", form),
+            login: form => callApi("post", "/users/login/", form),
+            rooms: page => callApi("get", `/rooms/?page${page}`)
+        }
+
+    * 본격적으로 api를 활용하기 전에 구조를 정리해보자 (logic과 design을 구분하는 작업)
+    우선 SignIn
+    (screens/Auth/SignIn 생성) 그 안에 index.js, SignInContainer.js, SignInPresenter.js 생성
+    SignIn.js 중 SignInContainer.js에는 logic 만 옮기고 SignInPresenter를 호출, return, SignInPresenter.js에는 design(ui)만 옮기기
+    
+    (screens/Auth/SignIn/SignInContainer)
+        import React, { useState } from "react";
+        import { useDispatch } from "react-redux";
+        import styled from "styled-components/native";
+        import { userLogin } from "../../../redux/usersSlice";
+        import utils from "../../../utils";
+        import SignInPresenter from "./SignInPresenter";
+
+
+        export default ({route: { params }}) => {
+            const dispatch = useDispatch();
+            const [email, setEmail] = useState(params?.email);
+            const [password, setPassword] = useState(params?.password);
+            const isFormValid = () => {
+                if(email === "" || password === ""){
+                    alert("All fields are required.");
+                    return false;
+                }
+                if(!utils.isEmail(email)){
+                    alert("Email is invalid");
+                    return false;
+                }
+                return true;
+            };
+            const handleSubmit = () => {            // 여기서 dispatch login을 해야한다 문제는 api의 login이랑 naming이 겹친다?? 어쨌든  api.js에서 바로 export 해주기 보다 api.js 에서 object로 만들자
+                if(!isFormValid()) {
+                    return;
+                }
+                dispatch(
+                    userLogin({
+                        username: email,                    // django에서 username, password 필요
+                        password
+                    })
+                );
+            };
+            return <SignInPresenter email={email} setEmail={setEmail} password={password} setPassword={setPassword} handleSubmit={handleSubmit} />
+        };
+
+    (screens/Auth/SignIn/SignInPresenter.js)
+        import React, { useState } from "react";
+        import {StatusBar, KeyboardAvoidingView} from "react-native";
+        import styled from "styled-components/native";
+        import Btn from "../../../components/Auth/Btn";
+        import Input from "../../../components/Auth/Input";
+        import DismissKeyboard from "../../../components/DismissKeyboard";
+
+
+        const Container = styled.View`
+            flex:1 ;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const InputContainer = styled.View`
+            margin-bottom: 30px;
+        `;
+
+        export default ({ email, setEmail, password, setPassword, handleSubmit }) => {
+            return(
+                <DismissKeyboard>
+                    <Container>
+                        <StatusBar barStyle="light-content" />
+                        <KeyboardAvoidingView behavior='position'>
+                        <InputContainer>
+                            <Input 
+                                value={email} 
+                                placeholder="E-mail" 
+                                keyboardType="email-address"
+                                stateFn={setEmail}
+                            />
+                            <Input 
+                                value={password} 
+                                placeholder="Password" 
+                                stateFn={setPassword}    
+                            />
+                        </InputContainer>
+                        <Btn text={"Sign In"} accent onPress={handleSubmit} />
+                        </KeyboardAvoidingView>
+                    </Container>
+                </DismissKeyboard>
+            );
+        };
+
+    (screens/Auth/SignIn/index.js)
+        import SignInContainer from "./SignInContainer";
+
+        export default SignInContainer
+
+    이렇게 한 후 기존에 있던 SignIn.js 삭제해주면 screens/Auth/SignIn에 있는 index.js 를 기본으로 가져온다.
+    SignUp.js에도 똑같이 적용해줄 것이다.
+
+
+# 9.3 Fetching Rooms
