@@ -2620,3 +2620,36 @@ export default userSlice.reducer;
     icon을 꾸미는 것에 대해서 자세히 말해보자면
         screenOptions가 함수가 될수 있다. screenOptions는 route를 포함하고 있다.
             즉, 현재 주소 위치가 어디인지 알 수 있다.
+
+    (navigation/Main.js)
+        import React from "react";
+        import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+        import Explore from "../screens/Main/Explore";
+        import MapScreen from "../screens/Main/Map";
+        import Profile from "../screens/Main/Profile";
+        import Saved from "../screens/Main/Saved";
+        import colors from "../colors";
+
+        const Main = createBottomTabNavigator();
+
+        export default () => (
+        <Main.Navigator 
+            tabBarOptions={{
+                activeTintColor: colors.red,
+                labelStyle: {
+                textTransform: "uppercase",
+                fontWeight: "bold"
+                }
+            }}
+            screenOptions = {({route}) =>({
+                tabBarIcon: ({focused}) => {
+                    
+                }
+            })}
+            >
+            <Main.Screen name="Explore" component={Explore}></Main.Screen>
+            <Main.Screen name="Saved" component={Saved}></Main.Screen>
+            <Main.Screen name="Map" component={MapScreen}></Main.Screen>
+            <Main.Screen name="Profile" component={Profile}></Main.Screen>
+        </Main.Navigator>
+        );
