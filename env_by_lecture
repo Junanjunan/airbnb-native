@@ -3085,7 +3085,7 @@ export default userSlice.reducer;
             try {
                 const {data: {results}} = await api.rooms();
                 dispatch(setExploreRooms({
-                    rooms: [results],             // results는 array이다.
+                    rooms: results,             // results는 array이다.
                     page: 1
                 }));
             } catch(e) {
@@ -3129,7 +3129,7 @@ export default userSlice.reducer;
             try {
                 const {data: {results}} = await api.rooms();
                 dispatch(setExploreRooms({
-                    rooms: [results],
+                    rooms: results,
                     page: 1
                 }));
             } catch(e) {
@@ -3183,7 +3183,7 @@ export default userSlice.reducer;
             try {
                 const {data: {results}} = await api.rooms();
                 dispatch(setExploreRooms({
-                    rooms: [results],
+                    rooms: results,
                     page: 1
                 }));
             } catch(e) {
@@ -3232,7 +3232,7 @@ export default userSlice.reducer;
             try {
                 const {data: {results}} = await api.rooms();
                 dispatch(setExploreRooms({
-                    rooms: [results],
+                    rooms: results,
                     page: 1
                 }));
             } catch(e) {
@@ -3347,7 +3347,7 @@ export default userSlice.reducer;
                 {rooms.length === 0 ? (
                 <ActivityIndicator color="black" />
                 ) : (
-                rooms.map(room => <Text>{room.name}</Text>)         # 이렇게 해서 room.name들이 표현되어야 하는데, 나는 room을 만들어줬는데도 안나타나는듯.... 왜??
+                rooms.map(room => <Text>{room.name}</Text>)          이렇게 해서 room.name들이 표현되어야 하는데, 나는 room을 만들어줬는데도 안나타나는듯.... 왜?? 강의 중에 roomsSlice.js에서 rooms: [results] 라고 표현된 부분 있는데, results는 이미 array이기 때문에 rooms: results 라고 해야한다. array안에 array를 넣어서 안나온 것임 
                 // <Text>나</Text>
                 )}
             </Container>

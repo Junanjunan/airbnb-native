@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView } from "react-native";
 import styled from "styled-components/native";
 import RoomCard from "../../../components/RoomCard";
 
+
 const Container = styled.View`
     flex: 1;
     justify-content: center;
@@ -22,20 +23,19 @@ export default ({rooms}) => {
             contentContainerStyle={{ paddingHorizontal: 15 }}
         >
             {
-            rooms.map(room => (
-                <RoomCard 
-                    key={room.id} 
-                    name={room.name} 
-                    price={room.price} 
-                    photos={room.photos}
-                    id={room.id} 
-                    isFav = {room.is_fav}
-                    isSuperHost={room.user} 
-                    />
+                rooms.map(room => (
+                    <RoomCard 
+                        key={room.id} 
+                        name={room.name}
+                        price={room.price} 
+                        photos={room.photos}
+                        id={room.id}
+                        isFav={room.is_fav}
+                        isSuperHost={room.user.superhost}
+                        />
                 ))
             }
         </ScrollView>
-        // <Text>나</Text>
         )}
     </Container>
     );
