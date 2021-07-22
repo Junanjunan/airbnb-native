@@ -3057,3 +3057,200 @@ export default userSlice.reducer;
 
 
 # 9.4 Duplicate Bugfix
+    
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    state.explore.rooms.push(action.payload.rooms);     // rooms는 array 인데, rooms에 넣어주는 results가 array이다. array에 array를 넣어주는 것은 우리가 원하던 것이 아님
+                    state.explore.page = action.payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export const getRooms = () => async dispatch => {
+            try {
+                const {data: {results}} = await api.rooms();
+                dispatch(setExploreRooms({
+                    rooms: [results],             // results는 array이다.
+                    page: 1
+                }));
+            } catch(e) {
+                // console.log(e)
+            }
+        }
+
+        export default roomsSlice.reducer;
+
+        rooms는 array 인데, rooms에 넣어주는 results가 array이다. array에 array를 넣어주는 것은 우리가 원하던 것이 아님, 이제 이를 고쳐볼 것이다
+
+    React Native Debugger 에서 우클릭해서 Log AsyncStorage content 확인 가능
+    현재 state들을 망쳐놔서 아직은 활용이 어려움.
+    log out을 하기 위해 Debugger에서 우클릭해서 Clear AsyncStorage 해준다 -> save 해서 새로고침하면 log out 되어있다.
+
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    action.payload.rooms.forEach(room => state.explore.rooms.push(room))    // rooms payload에 있는 모든 room을 state로 push
+                    // state.explore.rooms.push(action.payload.rooms);
+                    state.explore.page = action.payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export const getRooms = () => async dispatch => {
+            try {
+                const {data: {results}} = await api.rooms();
+                dispatch(setExploreRooms({
+                    rooms: [results],
+                    page: 1
+                }));
+            } catch(e) {
+                console.log(e)
+            }
+        }
+
+        export default roomsSlice.reducer;
+
+    * login screen에 default value를 설정해주자 - SignInContainer에 default value를 설정해서 sign in 을 바로 할 수 있도록 해보자.
+
+    (screens/Auth/SignInContainer.js)
+        export default ({route: { params }}) => {
+            const dispatch = useDispatch();
+            const [email, setEmail] = useState(params?.email || "taltalrealty@naver.com");
+            const [password, setPassword] = useState(params?.password || "52848625a");
+
+    이제 login을 하고 Debugger를 보면 rooms가 제대로 나온다...?
+    이것이 왜 중요하냐면,
+    우리의 핸드폰에 database가 있는 것과 같아서 우리의 핸드폰에 무엇이 들어가는지 조심할 필요가 있다
+     -> state.explore.rooms를 사용하는 대신에 다음과 같이 해보자
+
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    const { explore: {rooms}} = state;
+                    const { payload } = action;
+                    payload.rooms.forEach(room => rooms.push(room))     // 일단 체크할 것이 있는데 id를 가지고 있는 room이 입력되고 있고, room들의 database에 존재하는지를
+                    // action.payload.rooms.forEach(room => state.explore.rooms.push(room))
+                    // state.explore.rooms.push(action.payload.rooms);
+                    state.explore.page = payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export const getRooms = () => async dispatch => {
+            try {
+                const {data: {results}} = await api.rooms();
+                dispatch(setExploreRooms({
+                    rooms: [results],
+                    page: 1
+                }));
+            } catch(e) {
+                console.log(e)
+            }
+        }
+
+        export default roomsSlice.reducer;
+
+    // 일단 체크할 것이 있는데 id를 가지고 있는 room이 입력되고 있고, room들의 database에 존재하는지를 -> 있으면 저장하지를 않을 것이다.
+    // 또는 array.find 라는 array의 method를 이용 해보자..?
+        array.find: array 안의 object를 찾아주는 method
+        array.find method를 활용해서, 기존에 존재하는 방은 저장하지 않고, 새로운 방만 저장하도록 짜보자
+    
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    const { explore } = state;
+                    const { payload } = action;
+                    payload.rooms.forEach(payloadRoom => {
+                        const exists = explore.rooms.find(savedRoom => savedRoom.id === payloadRoom.id)
+                    });
+                    if(!exists){
+                        explore.rooms.push(payloadRoom);
+                    }
+                    state.explore.page = payload.page;
+                }
+            }
+        });
+
+        const { setExploreRooms } = roomsSlice.actions;
+
+        export const getRooms = () => async dispatch => {
+            try {
+                const {data: {results}} = await api.rooms();
+                dispatch(setExploreRooms({
+                    rooms: [results],
+                    page: 1
+                }));
+            } catch(e) {
+                console.log(e)
+            }
+        }
+
+        export default roomsSlice.reducer;
+                    
+
+    * 위처럼 기존에 있는 것은 저장하지 않도록 하는 것은 중요하다
+        내가 내 휴대폰에 뭐가 있는 것을 안다는 것은, 즉 self-contained database 라는 걸 알면, API에 의존하지 않을 수 있다.
+        API는 그저 새로운 data가 있는지 확인하는 용도. 이미 data가 존재한다면 duplicate 하지 않을 것이다.
+    * react application의 front-end를 작업할 때 우리는 대부분 그냥 data를 get하고 보여준다.
+      user가 다시 방문할 때에는 data를 다시 받고 보여준다.
+      우리는 data를 save 하는게 아니다. 핸드폰에는 JavaScript database인 state가 있다.
+      그리고 이것들은 변하지 않는다.(?)
+      override하지 않도록 해야한다. 그냥 data를 save 하지 않고 더 많은 data가 존재하지 않는지 확인해야 한다.
+       
+
+# 9.5 RoomCard part One
