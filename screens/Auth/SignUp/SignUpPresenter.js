@@ -1,9 +1,9 @@
 import React from "react";
 import { StatusBar, KeyboardAvoidingView } from "react-native";
 import styled from "styled-components/native";
-import Btn from "../../components/Auth/Btn";
-import Input from "../../components/Auth/Input";
-import DismissKeyboard from "../../components/DismissKeyboard";
+import Btn from "../../../components/Auth/Btn";
+import Input from "../../../components/Auth/Input";
+import DismissKeyboard from "../../../components/DismissKeyboard";
 
 const Container = styled.View`
   flex: 1;

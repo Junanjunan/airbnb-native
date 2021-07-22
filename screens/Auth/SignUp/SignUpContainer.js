@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import utils from "../../utils";
-import api from "../../api";
+import utils from "../../../utils";
+import api from "../../../api";
 import SignUpPresenter from "./SignUpPresenter";
 
 export default ({ navigation: { navigate } }) => {

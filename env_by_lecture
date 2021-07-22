@@ -3254,3 +3254,158 @@ export default userSlice.reducer;
        
 
 # 9.5 RoomCard part One
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import styled from "styled-components/native";
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default ({rooms}) => {
+            console.log(rooms);
+            return(
+            <Container>
+                <Text>Explore</Text>
+            </Container>
+            );
+        };
+
+    위와 같이 해주면 room이 console에 나오는 것 확인 이를 이용해서 해보자
+
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import { ActivityIndicator } from "react-native";
+        import styled from "styled-components/native";
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default ({rooms}) => {
+            if (rooms.length === 0) {       // 즉, user가 처음 방문했을 떄
+                return (
+                <Container>
+                    <ActivityIndicator color ="blakc" />
+                </Container>);
+            } else {
+                return (
+                    <Container>
+                        <Text>Explore</Text>
+                    </Container>
+                )
+            }
+        };
+
+    위를 좀 더 다듬어서
+    
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import { ActivityIndicator } from "react-native";
+        import styled from "styled-components/native";
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default ({rooms}) => {
+            return(
+            <Container>
+                {rooms.length === 0 ? <ActivityIndicator color="black" /> : <Text>Hello</Text>}
+            </Container>
+            );
+        };
+
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import { ActivityIndicator } from "react-native";
+        import styled from "styled-components/native";
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default ({rooms}) => {
+            return(
+            <Container>
+                {rooms.length === 0 ? (
+                <ActivityIndicator color="black" />
+                ) : (
+                rooms.map(room => <Text>{room.name}</Text>)         # 이렇게 해서 room.name들이 표현되어야 하는데, 나는 room을 만들어줬는데도 안나타나는듯.... 왜??
+                // <Text>나</Text>
+                )}
+            </Container>
+            );
+        };
+
+    (components/Roomcard.js)
+        import react from "react";
+        import Pt from "prop-types";
+        import styled from "styled-components/native";
+
+        const RoomCard = ({id, isFav, isSuperHost, photos, name, price}) => null
+
+        RoomCard.protoTypes = {
+            id: Pt.number.isRequired,
+            isFav: Pt.bool.isRequired,
+            isSuperHost: Pt.bool.isRequired,
+            photos: Pt.arrayOf(
+                Pt.shape({
+                file: Pt.string
+            })
+            ),
+            name: Pt.string.isRequired,
+            price: Pt.number.isRequired
+        };
+    
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import { ActivityIndicator } from "react-native";
+        import styled from "styled-components/native";
+        import RoomCard from "../../../components/RoomCard";
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        const Text = styled.Text``;
+
+        export default ({rooms}) => {
+            return(
+            <Container>
+                {rooms.length === 0 ? (
+                <ActivityIndicator color="black" />
+                ) : (
+                rooms.map(room => (
+                    <RoomCard 
+                        key={room.id} 
+                        name={room.name} 
+                        price={room.price} 
+                        photos={room.photos}
+                        id={room.id} 
+                        isFav = {room.is_fav}
+                        isSuperHost={room.user} 
+                        />
+                    ))
+                )}
+            </Container>
+            );
+        };
