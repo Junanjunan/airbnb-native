@@ -3698,9 +3698,22 @@ export default userSlice.reducer;
 
         export default RoomCard
 
-    // 나는 photos.length로 입력하면 length가 undefined 라고 오류가 남.... 
-        -> 내 debugger에는 photos가 안찍힘... 
-            photos가 Room model에 있는게 아니라 Photo model에 있고 ForeignKey로 연결되어 있어서 생기는 문제인거 같기도 한데... 
-            왜 강의에서는 되고 나는 안될까...
-            더 진행이 안되네....
-            
+    위와 같이 했는데, image를 인식 못하는 경우
+    우리 이미지가 webp라서 안되는 것일수 있다 함.
+    python pillow를 통해서 image를 webp에서 jpeg로 바꿔보자.
+
+    manage.py가 있는 곳에 webp2jpeg.py를 만들어서 다음과 같이 작성
+
+    (airbnb-api/webp2jpeg.py)
+
+        from PIL import Image
+
+        image_number = 31
+
+        for image in range(image_number):
+            path = f"./uploads/room_photos/{image+1}.webp"
+            im = Image.open(path)
+            im.save(f"./uploads/room_photos/{image+1}.webp", "jpeg")    # 우리의 server와 database의 path가 ./uploads/room_photos 로 지정되어 있기 때문에, path를 바꿔서 저장하지 않는다.
+
+    실행할 때는 python webp2.jpeg.py 로 실행하면 됨
+    잘 작동하는지 확인하기 위해서 print(im) 등 넣어보면 됨
