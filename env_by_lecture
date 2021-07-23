@@ -4007,3 +4007,143 @@ export default userSlice.reducer;
         };
 
         export default roomsSlice.reducer;
+
+
+# 9.12 Button and Realm
+    전 강의서 하던걸 좀 더 다듬은 것
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    const { payload } = action;
+                if(payload.page === 1){
+                    state.explore.rooms = payload.rooms;
+                    state.explore.page = 1;
+                } else{
+                    state.explore.rooms = [...state.explore.rooms, ...payload.rooms];
+                }
+                },
+                increasePage(state, action){
+                    state.explore.page += 1;
+                }
+            }
+        });
+
+        export const { setExploreRooms, increasePage } = roomsSlice.actions;
+
+        export const getRooms = page => async dispatch => {       // getRoos는 page argument와 함께 호출해야 함
+            try {
+                const {data: {results}} = await api.rooms(page);    // api.rooms도 page argument와 함께 호출해야 함
+                dispatch(setExploreRooms({
+                    rooms: results,
+                    page,
+                }));
+            } catch(e) {
+                console.warn(e);
+            }
+        };
+
+        export default roomsSlice.reducer;
+
+    버튼을 꾸며보자
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import { ActivityIndicator, ScrollView, TouchableOpacity, Text } from "react-native";
+        import styled from "styled-components/native";
+        import RoomCard from "../../../components/RoomCard";
+
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            padding-horizontal: 15px;
+        `;
+
+
+        const FakeBar = styled.View`
+            height: 40px;
+            width: 100%;
+            background-color: white;
+            margin: 80px 0px 10px 0px;
+            box-shadow: 1px 5px 5px rgba(200, 200, 200, 0.5);
+            border-radius: 7px;
+            justify-content: center;
+            padding-left: 10px;
+        `;  // 나는 box-shadow 안되는 듯..
+
+        const FakeText = styled.Text`
+            font-size: 16px;
+            font-weight: 300;
+        `;
+
+        const LoadMore = styled.View`
+            width: 100%;
+            padding: 10px 10px;
+            align-items: center;
+            background-color: #006a70;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        `;
+
+        const LoadMoreText = styled.Text`
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        `;
+
+        export default ({ rooms, increasePage }) => {
+            return(
+            <Container>
+                {rooms.length === 0 ? (
+                <ActivityIndicator color="black" />
+                ) : (
+                <>
+                <FakeBar>
+                    <FakeText>Search..</FakeText>
+                </FakeBar>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    style={{ width: "100%" }} 
+                    contentContainerStyle={{ paddingTop: 30 }}
+                >
+                    {
+                        rooms.map(room => (
+                            <RoomCard 
+                                key={room.id} 
+                                name={room.name}
+                                price={room.price} 
+                                photos={room.photos}
+                                id={room.id}
+                                isFav={room.is_fav}
+                                isSuperHost={room.user.superhost}
+                                />
+                        ))
+                    }
+                    <TouchableOpacity onPress={increasePage}>
+                        <LoadMore>
+                            <LoadMoreText>Load More</LoadMoreText>
+                        </LoadMore>
+                    </TouchableOpacity>
+                </ScrollView>
+                </>
+                )}
+            </Container>
+            );
+        };
+
+    Realm Database에 대해 알아보자
+        핸드폰에 database가 있는 것처럼 느끼게 emulate 해준다.
+        redux 대신에 쓸 수 있다? 특히 redux persist?
+        로딩 화면이 나타나는 것을 좀 더 해결하는 방법? redux 대신에?
