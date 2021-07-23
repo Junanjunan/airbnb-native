@@ -3921,3 +3921,89 @@ export default userSlice.reducer;
 
 
 # 9.11 Load More Bug Fix
+    (screens/Main/Explore/ExploreContainer.js)
+        import React, { useEffect, useState } from "react";
+        import ExplorePresenter from "./ExplorePresenter";
+
+        export default ({ getRooms, rooms,}) => {
+            const [page, setPage] = useState(1);
+            const increasePage = () => setPage(prev => prev +1);
+            useEffect(() => {               
+                getRooms(page);             
+            }, [page]);
+            return <ExplorePresenter rooms={rooms} increasePage={increasePage} />; // ExplorePresenter에 rooms를 보낸다? 하지만 아직 console.log를 보면, rooms이 비어있는 array이다. roomsSlice.js 에서 const { data } 부분을 끝내지 않았기 때문 -> /api/v1/rooms/를 보면 count, next, previous, results 값이 있는데, results 값을 받아야 한다.
+        };
+
+    위와 같이 하는건 redux로부터 increasePage를 사용하지 않고 state로부터 increasePage를 사용하는 것이다.
+    큰 문제는 없는데. Load More 하고 새로 들어갔을때 기본적으로 Load한 페이지들이 모두 나와있으면서도 Load More를 해도 새로운 창이 나타나지 않는 오류가 있다. 남아있는 페이지만큼 Load More 해준 후에 새 페이지 나온다 함
+    이를 고치는 여러 방법이 있는데 강의에서는 state를 화면뒤에서 refresh 시키는 방법을 알려준다 함
+
+    (screens/Main/Explore/ExploreContainer.js)
+
+    import React, { useEffect } from "react";
+    import ExplorePresenter from "./ExplorePresenter";
+
+    export default ({ getRooms, rooms, page, increasePage }) => {
+        useEffect(() => {
+            getRooms(1);
+        }, [])
+        useEffect(() => {               
+            getRooms(page);             
+        }, [page]);
+        return <ExplorePresenter rooms={rooms} increasePage={increasePage} />; 
+    };
+    
+    원래대로 해준 후에
+
+    (redux/roomsSlice.js)
+        import { createSlice } from "@reduxjs/toolkit";
+        import api from "../api";
+
+        const roomsSlice = createSlice({
+            name: "rooms",
+            initialState: {
+                explore: {
+                    page: 1,
+                    rooms: []
+                },
+                favs: []
+            },
+            reducers: {
+                setExploreRooms(state, action){
+                    const { explore } = state;
+                    const { payload } = action;
+                if(payload.page === 1){
+                    state.explore.rooms = payload.rooms;
+                    state.explore.page = 1;
+                } else{
+                    payload.rooms.forEach(payloadRoom => {
+                        const exists = explore.rooms.find(
+                            savedRoom => savedRoom.id === payloadRoom.id
+                            );
+                        if(!exists){
+                            explore.rooms.push(payloadRoom);
+                        }
+                    });
+                }
+                },
+                increasePage(state, action){
+                    state.explore.page += 1;
+                }
+            }
+        });
+
+        export const { setExploreRooms, increasePage } = roomsSlice.actions;
+
+        export const getRooms = page => async dispatch => {       // getRoos는 page argument와 함께 호출해야 함
+            try {
+                const {data: {results}} = await api.rooms(page);    // api.rooms도 page argument와 함께 호출해야 함
+                dispatch(setExploreRooms({
+                    rooms: results,
+                    page,
+                }));
+            } catch(e) {
+                console.warn(e);
+            }
+        };
+
+        export default roomsSlice.reducer;
