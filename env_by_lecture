@@ -3717,3 +3717,91 @@ export default userSlice.reducer;
 
     실행할 때는 python webp2.jpeg.py 로 실행하면 됨
     잘 작동하는지 확인하기 위해서 print(im) 등 넣어보면 됨
+
+
+# 9.9 Bugfix
+    github.com/leecade/react-native-swiper 에서 pagination을 보면, 다양한 기능들을 볼 수 있다. autoplay를 넣으면 사진 자동 넘김
+
+    (components/RoomCard.js)
+    ...
+    <Swiper 
+        paginationStyle={{ marginBottom: -15 }}
+        dotColor = {"gray"}
+        activeDotColor = {"white"}
+        >
+        {photos.map(photo => (
+            <SlideImage key={photo.id} source={{ uri: photo.file }} />
+        ))}
+    </Swiper>
+    ...
+
+    좀더 꾸며보자
+
+    (screens/Main/Explore/ExplorePresenter.js)
+        import React from "react";
+        import { ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
+        import styled from "styled-components/native";
+        import RoomCard from "../../../components/RoomCard";
+
+
+        const Container = styled.View`
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            padding-horizontal: 15px;
+        `;
+
+        const Text = styled.Text``;
+
+        const FakeBar = styled.View`
+            height: 40px;
+            width: 100%;
+            background-color: white;
+            margin: 40px 0px 10px 0px;
+            box-shadow: 1px 5px 5px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            justify-content: center;
+            padding-left: 10px;
+        `;  // 나는 box-shadow 안되는 듯..
+
+        const FakeText = styled.Text`
+            font-size: 16px;
+        `;
+
+        export default ({rooms}) => {
+            return(
+            <Container>
+                {rooms.length === 0 ? (
+                <ActivityIndicator color="black" />
+                ) : (
+                <>
+                <FakeBar>
+                    <FakeText>Search..</FakeText>
+                </FakeBar>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    style={{ width: "100%" }} 
+                    contentContainerStyle={{ paddingTop: 30 }}
+                >
+                    {
+                        rooms.map(room => (
+                            <RoomCard 
+                                key={room.id} 
+                                name={room.name}
+                                price={room.price} 
+                                photos={room.photos}
+                                id={room.id}
+                                isFav={room.is_fav}
+                                isSuperHost={room.user.superhost}
+                                />
+                        ))
+                    }
+                    <TouchableOpacity>
+                        <Text>Load More</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+                </>
+                )}
+            </Container>
+            );
+        };

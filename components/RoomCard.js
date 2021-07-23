@@ -68,7 +68,11 @@ const RoomCard = ({id, isFav, isSuperHost, photos, name, price,}) => {
                     source={require("../assets/roomDefault.jpg")} 
                 />
                 ) : (
-                    <Swiper>
+                    <Swiper 
+                        paginationStyle={{ marginBottom: -15 }}
+                        dotColor = {"gray"}
+                        activeDotColor = {"white"}
+                        >
                         {photos.map(photo => (
                             <SlideImage key={photo.id} source={{ uri: photo.file }} />
                         ))}
