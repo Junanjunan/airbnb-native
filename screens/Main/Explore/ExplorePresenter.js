@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, Text } from "react-native";
 import styled from "styled-components/native";
 import RoomCard from "../../../components/RoomCard";
 
@@ -11,24 +11,24 @@ const Container = styled.View`
     padding-horizontal: 15px;
 `;
 
-const Text = styled.Text``;
 
 const FakeBar = styled.View`
     height: 40px;
     width: 100%;
     background-color: white;
-    margin: 40px 0px 10px 0px;
-    box-shadow: 1px 5px 5px rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
+    margin: 80px 0px 10px 0px;
+    box-shadow: 1px 5px 5px rgba(200, 200, 200, 0.5);
+    border-radius: 7px;
     justify-content: center;
     padding-left: 10px;
 `;  // 나는 box-shadow 안되는 듯..
 
 const FakeText = styled.Text`
     font-size: 16px;
+    font-weight: 300;
 `;
 
-export default ({rooms}) => {
+export default ({ rooms, increasePage }) => {
     return(
     <Container>
         {rooms.length === 0 ? (
@@ -56,7 +56,7 @@ export default ({rooms}) => {
                         />
                 ))
             }
-            <TouchableOpacity>
+            <TouchableOpacity onPress={increasePage}>
                 <Text>Load More</Text>
             </TouchableOpacity>
         </ScrollView>

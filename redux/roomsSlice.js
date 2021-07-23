@@ -22,23 +22,24 @@ const roomsSlice = createSlice({
                     explore.rooms.push(payloadRoom);
                 }
             });
-            state.explore.page = payload.page;
+        },
+        increasePage(state, action){
+            state.explore.page += 1;
         }
     }
 });
 
-const { setExploreRooms } = roomsSlice.actions;
+export const { setExploreRooms, increasePage } = roomsSlice.actions;
 
-export const getRooms = () => async dispatch => {
+export const getRooms = page => async dispatch => {       // getRoos는 page argument와 함께 호출해야 함
     try {
-        const {data: {results}} = await api.rooms();
+        const {data: {results}} = await api.rooms(page);    // api.rooms도 page argument와 함께 호출해야 함
         dispatch(setExploreRooms({
-            rooms: results,
-            page: 1
+            rooms: results
         }));
     } catch(e) {
-        // console.log(e)
+        console.warn(e);
     }
-}
+};
 
 export default roomsSlice.reducer;

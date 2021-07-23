@@ -57,7 +57,6 @@ height: 100%;
 
 
 const RoomCard = ({id, isFav, isSuperHost, photos, name, price,}) => {
-    // console.log(photos)
     console.log(typeof photos)              // photos가 array(? object?)가 아니면 아래 코드들이 실행이 안된다. photos의 length가 없다고 나오면 거의 이 문제. 꼭 확인
     return (
         <Container>
