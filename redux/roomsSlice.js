@@ -37,7 +37,7 @@ export const getRooms = () => async dispatch => {
             page: 1
         }));
     } catch(e) {
-        console.log(e)
+        // console.log(e)
     }
 }
 

@@ -1,9 +1,13 @@
 import React from "react";
 import Pt from "prop-types";
 import styled from "styled-components/native";
+import { Dimensions } from "react-native";
+import Swiper from 'react-native-swiper'
+
+const {width, height} = Dimensions.get("screen");
 
 const Container = styled.View`
-    margin-bottom: 50px;
+    margin-bottom: 25px;
     align-items: flex-start;
 `;
 
@@ -36,8 +40,41 @@ const SuperhostText = styled.Text`
     font-size: 10px;
 `;
 
-const RoomCard = ({id, isFav, isSuperHost, photos, name, price,}) => (
-    <Container>
+const PhotosContainer = styled.View`
+    margin-bottom: 10px;
+    overflow: hidden;
+    background-color: red;
+    width: 100%;
+    height: ${height/4}px;
+`;
+
+
+const SlideImage = styled.Image`
+width: 100%;
+height: 100%;
+`;                          // require로 내부 폴더에서 가져오면 이거 안해도 이미지가 보이지만, source로 온라인 등에서 이미지 가져올때는 이미지 크기 설정안해주면 나타나지를 않는다.
+
+
+
+const RoomCard = ({id, isFav, isSuperHost, photos, name, price,}) => {
+    // console.log(photos)
+    console.log(typeof photos)              // photos가 array(? object?)가 아니면 아래 코드들이 실행이 안된다. photos의 length가 없다고 나오면 거의 이 문제. 꼭 확인
+    return (
+        <Container>
+        <PhotosContainer>
+            {photos.length === 0 ? (
+                <SlideImage 
+                    resizeMode="repeat" 
+                    source={require("../assets/roomDefault.jpg")} 
+                />
+                ) : (
+                    <Swiper>
+                        {photos.map(photo => (
+                            <SlideImage key={photo.id} source={{ uri: photo.file }} />
+                        ))}
+                    </Swiper>
+                )}
+        </PhotosContainer>
         {isSuperHost ? (
             <Superhost>
                 <SuperhostText>Superhost</SuperhostText>
@@ -46,10 +83,11 @@ const RoomCard = ({id, isFav, isSuperHost, photos, name, price,}) => (
         <Name>{name}</Name>
         <PriceContainer><PriceNumber>{price}</PriceNumber><PriceText>/night</PriceText></PriceContainer>
     </Container>
-);
+    );
+};
 
 RoomCard.propTypes = {
-    id: Pt.number.isRequired,
+    id: Pt.number,
     isFav: Pt.bool.isRequired,
     isSuperHost: Pt.bool.isRequired,
     photos: Pt.arrayOf(

@@ -25,6 +25,7 @@ export default function App() {
   const loadAssets = () => {
     const images = [
       require("./assets/loginBg.jpg"),
+      require("./assets/roomDefault.jpg"),
   "https://blog.kakaocdn.net/dn/95jT7/btqQCAwEbDf/m30lmOx9xg7fKaPzQsFfJ1/img.jpg"
 ];
   const fonts = [Ionicons.font]

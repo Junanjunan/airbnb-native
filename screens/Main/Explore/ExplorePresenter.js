@@ -18,7 +18,8 @@ export default ({rooms}) => {
         {rooms.length === 0 ? (
         <ActivityIndicator color="black" />
         ) : (
-        <ScrollView 
+        <ScrollView
+            showsVerticalScrollIndicator={false}
             style={{ width: "100%", marginTop:120 }} 
             contentContainerStyle={{ paddingHorizontal: 15 }}
         >
@@ -34,6 +35,8 @@ export default ({rooms}) => {
                         isSuperHost={room.user.superhost}
                         />
                 ))
+
+                // rooms.map(room => console.log(room))
             }
         </ScrollView>
         )}
