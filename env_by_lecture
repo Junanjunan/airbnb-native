@@ -4269,6 +4269,6 @@ export default userSlice.reducer;
     확실히 그냥 react-native-swiper가 훨씬 빠름. 다시 돌려놨음
 
 
-## SAVED SCREEN
+## SAVED SCREEN 
 
 # 10.0 Getting Favourites
